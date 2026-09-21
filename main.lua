@@ -5,6 +5,8 @@ return (function(...)
             CustomSpeedKeybinds = true,
             HideParryUI = true,
             RevolverAutofarm = true,
+            FakeLag = true,
+            Desync = true,
         }
         local premiumUnlocked = true
         local premiumPayloadReady = true
@@ -16739,19 +16741,6 @@ return (function(...)
                 )
                 createSection(tabVisuals, "Network Manipulation", UI.Accent)
                 local s = createCollapsibleToggle(tabVisuals, "Fake Lag", settings.FakeLag, function(c)
-                    if c and not isPremium("FakeLag") then
-                        showNotification(
-                            "Premium Feature +",
-                            "Sblocca la versione Premium per usare il Fake Lag!",
-                            "warning"
-                        )
-                        settings.FakeLag = false
-                        pcall(saveSettings)
-                        if fakeLagGroup and fakeLagGroup.setValue then
-                            fakeLagGroup.setValue(false)
-                        end
-                        return
-                    end
                     settings.FakeLag = c
                     pcall(saveSettings)
                 end, UI.Accent, "FakeLag")
@@ -16785,19 +16774,6 @@ return (function(...)
                     end
                 end, nil, "FakeLagGhost")
                 local u = createCollapsibleToggle(tabVisuals, "Network Desync", settings.Desync, function(c)
-                    if c and not isPremium("Desync") then
-                        showNotification(
-                            "Premium Feature +",
-                            "Sblocca la versione Premium per usare il Network Desync!",
-                            "warning"
-                        )
-                        settings.Desync = false
-                        pcall(saveSettings)
-                        if desyncGroup and desyncGroup.setValue then
-                            desyncGroup.setValue(false)
-                        end
-                        return
-                    end
                     settings.Desync = c
                     pcall(saveSettings)
                 end, UI.Accent, "Desync")
@@ -31192,10 +31168,7 @@ return (function(...)
                 local h = false
                 while activeLoop do
                     local j = d.Heartbeat:Wait()
-                    if
-                        (settings.FakeLag or settings.Desync)
-                        and (isPremium() and (premiumHooks and (premiumHooks.FakeLag or premiumHooks.Desync)))
-                    then
+                    if settings.FakeLag or settings.Desync then
                         pcall(function()
                             local c = localPlayer.Character
                             local d = c and c:FindFirstChild("HumanoidRootPart")
