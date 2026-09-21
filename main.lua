@@ -16469,7 +16469,7 @@ return (function(...)
                     s.content,
                     "Lag Amount (ms)",
                     50,
-                    1000,
+                    1000000,
                     settings.FakeLagMs or 200,
                     function(c)
                         settings.FakeLagMs = c
@@ -30884,7 +30884,7 @@ return (function(...)
                                     h = false
                                     destroyDesyncGhost()
                                 end
-                                local l = math.clamp(settings.FakeLagMs or 200, 50, 1000)
+                                local l = math.clamp(settings.FakeLagMs or 200, 50, 1000000)
                                 local m = l / 1000
                                 if not f then
                                     f = true
@@ -31032,7 +31032,7 @@ return (function(...)
                                             end
                                         end
                                         if settings.FakeLag and not h() then
-                                            local c = math.clamp(settings.FakeLagMs or 200, 50, 1000)
+                                            local c = math.clamp(settings.FakeLagMs or 200, 50, 1000000)
                                             table.insert(
                                                 d,
                                                 { self = i, func = f, args = k, sendTime = tick() + (c / 1000) }
@@ -31063,7 +31063,7 @@ return (function(...)
                                         end
                                     end
                                     if settings.FakeLag and not h() then
-                                        local c = math.clamp(settings.FakeLagMs or 200, 50, 1000)
+                                        local c = math.clamp(settings.FakeLagMs or 200, 50, 1000000)
                                         table.insert(
                                             d,
                                             { self = i, func = f, args = k, sendTime = tick() + (c / 1000) }
