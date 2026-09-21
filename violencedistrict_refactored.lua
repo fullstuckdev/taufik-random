@@ -2559,6 +2559,23 @@ return (function(...)
         if settings.RevolverAutofarm and premiumVerified then
             settings.InstantHeal = true
         end
+        settings.NoSkillChecks = false
+        settings.AlwaysFastVault = false
+        settings.AutoFleeKiller = false
+        settings.AntiWiggle = false
+        settings.CustomSpeedKeybindsEnabled = false
+        if settings.SpearAimbot then
+            settings.SpearAimbot.Enabled = false
+        end
+        if settings.DBDSounds then
+            settings.DBDSounds.Enabled = false
+        end
+        if settings.DBDHud then
+            settings.DBDHud.Enabled = false
+        end
+        if settings.CustomGenSound then
+            settings.CustomGenSound.Enabled = false
+        end
         local setModelAttribute
         local getModelAttribute
         ActiveESP = {
@@ -11656,59 +11673,6 @@ return (function(...)
                         pcall(saveSettings)
                     end
                 )
-                controlRegistry["CustomGenSound.Enabled"] = g.addSubToggle(
-                    "Custom Generator Complete Sound",
-                    settings.CustomGenSound.Enabled,
-                    function(c)
-                        if c and not isPremium("CustomGenSound") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if
-                                controlRegistry["CustomGenSound.Enabled"]
-                                and controlRegistry["CustomGenSound.Enabled"].setValue
-                            then
-                                controlRegistry["CustomGenSound.Enabled"].setValue(false)
-                            end
-                            return
-                        end
-                        settings.CustomGenSound.Enabled = c
-                        if c then
-                            pcall(applyCustomSoundToAllGens)
-                        end
-                        pcall(saveSettings)
-                    end
-                )
-                controlRegistry["CustomGenSound.SoundId"] = createInput(
-                    g.content,
-                    "Completion Sound Asset ID",
-                    "rbxassetid://124429695332529",
-                    settings.CustomGenSound.SoundId or "rbxassetid://124429695332529",
-                    function(c)
-                        settings.CustomGenSound.SoundId = c
-                        pcall(applyCustomSoundToAllGens)
-                        pcall(saveSettings)
-                    end,
-                    "▶ PLAY",
-                    function(c)
-                        playSoundPreview(c)
-                    end
-                )
-                controlRegistry["CustomGenSound.Volume"] = createSlider(
-                    g.content,
-                    "Completion Sound Volume",
-                    1,
-                    30,
-                    math.floor((settings.CustomGenSound.Volume or 1) * 10),
-                    function(c)
-                        settings.CustomGenSound.Volume = c / 10
-                        pcall(applyCustomSoundToAllGens)
-                        pcall(saveSettings)
-                    end,
-                    UI.AccentCyan
-                )
                 local h = createCollapsibleToggle(tabESP, "View Hooks", settings.HookESP.Enabled, function(c)
                     settings.HookESP.Enabled = c
                     pcall(saveSettings)
@@ -12486,80 +12450,7 @@ return (function(...)
                 h = m.setValue
                 _G.VD_SetTotalAFKToggle = h
                 controlRegistry.AutoFarmAFKTotal = m
-                toggleTotalAfk = function()
-                    local d = localPlayer.Character
-                    local f = d and d:FindFirstChild("HumanoidRootPart")
-                    if not f then
-                        showNotification("Escape Failed", "Character root part not found!", "error")
-                        return
-                    end
-                    if premiumHooks and type(premiumHooks.InstantEscape) == "function" then
-                        premiumHooks.InstantEscape(f, showNotification)
-                    else
-                        showNotification(
-                            "Premium Feature +",
-                            "Unlock the Premium version to use this feature!",
-                            "warning"
-                        )
-                    end
-                end
-                createButton(tabFarm, "Instant Finishline Escape", "Escape", function()
-                    if not isPremium() then
-                        showNotification(
-                            "Premium Feature +",
-                            "Unlock the Premium version to use this feature!",
-                            "warning"
-                        )
-                        return
-                    end
-                    toggleTotalAfk()
-                end, UI.Accent, "InstantEscape")
                 createSection(tabFarm, "Generator Automations", UI.Accent)
-                j = function()
-                    if premiumHooks and type(premiumHooks.CancelGen) == "function" then
-                        local d = pcall(premiumHooks.CancelGen, localPlayer, cachedGenerators, showNotification)
-                        if d then
-                            return
-                        end
-                    end
-                    showNotification("Generator Buff", "Unlock Premium version to use this feature! +", "error")
-                end
-                _G.doCancelGen = j
-                local n = function()
-                    if premiumHooks and type(premiumHooks.ManualSpoofGen) == "function" then
-                        premiumHooks.ManualSpoofGen(localPlayer, cachedGenerators, showNotification)
-                    else
-                        showNotification("Manual Spoof", "Unlock Premium version to use this feature! +", "error")
-                    end
-                end
-                _G.doManualSpoofGen = n
-                local o = createCollapsibleGroup(tabFarm, "Generator Buff", UI.Accent)
-                createButton(o.content, "Trigger Generator Buff (Max)", "Trigger", function()
-                    if not isPremium() then
-                        showNotification(
-                            "Premium Feature +",
-                            "Unlock the Premium version to use this feature!",
-                            "warning"
-                        )
-                        return
-                    end
-                    if j then
-                        pcall(j)
-                    end
-                end, UI.Accent, "CancelGen")
-                createButton(o.content, "Manual Spoof (+1 Player)", "Trigger", function()
-                    if not isPremium() then
-                        showNotification(
-                            "Premium Feature +",
-                            "Unlock the Premium version to use this feature!",
-                            "warning"
-                        )
-                        return
-                    end
-                    if n then
-                        pcall(n)
-                    end
-                end, UI.AccentCyan, "ManualSpoofGen")
                 local p = createCollapsibleToggle(tabFarm, "Auto Skill Check", settings.AutoSkillCheck, function(c)
                     settings.AutoSkillCheck = c
                     pcall(saveSettings)
@@ -12611,40 +12502,6 @@ return (function(...)
                     end,
                     UI.Accent
                 )
-                controlRegistry.NoSkillChecks = createToggle(
-                    p.content,
-                    "No Skill Checks (Remove Checks)",
-                    settings.NoSkillChecks,
-                    function(c)
-                        if c and not isPremium("NoSkillChecks") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.NoSkillChecks and controlRegistry.NoSkillChecks.setValue then
-                                controlRegistry.NoSkillChecks.setValue(false)
-                            end
-                            return
-                        end
-                        settings.NoSkillChecks = c
-                        pcall(saveSettings)
-                        local d = localPlayer.Character
-                        if d then
-                            if c then
-                                if _G.VD_StashSkillchecks then
-                                    pcall(_G.VD_StashSkillchecks)
-                                end
-                            else
-                                if _G.VD_RestoreSkillchecks then
-                                    pcall(_G.VD_RestoreSkillchecks)
-                                end
-                            end
-                        end
-                    end,
-                    UI.Accent,
-                    "NoSkillChecks"
-                )
                 createSection(tabFarm, "Killer Automations", UI.Accent)
                 local r = createToggle(tabFarm, "Killer Auto Farm", settings.AutoFarmKiller, function(c)
                     if c then
@@ -12672,27 +12529,6 @@ return (function(...)
                 g = r.setValue
                 _G.VD_SetKillerFarmToggle = g
                 controlRegistry.AutoFarmKiller = r
-                local s = createToggle(tabFarm, "Anti Wiggle (Auto-Drop Survivor)", settings.AntiWiggle, function(c)
-                    if not isPremium() then
-                        showNotification(
-                            "Premium Feature +",
-                            "Unlock the Premium version to use this feature!",
-                            "warning"
-                        )
-                        return
-                    end
-                    settings.AntiWiggle = c
-                    if c and isPremium() then
-                        showNotification(
-                            "Anti Wiggle Enabled",
-                            "Will auto-drop survivors right before wiggle escapes.",
-                            "success"
-                        )
-                    end
-                    pcall(saveSettings)
-                end, UI.Accent, "AntiWiggle")
-                _G.VD_SetAntiWiggleToggle = s.setValue
-                controlRegistry.AntiWiggle = s
                 createSection(tabFarm, "Telemetry & State", UI.Accent)
                 local t = Instance.new("Frame")
                 t.Size = UDim2.new(1, 0, 0, 32)
@@ -12804,105 +12640,6 @@ return (function(...)
                     end,
                     nil
                 )
-                local f = createCollapsibleToggle(
-                    d.content,
-                    "Custom Speed Keybinds",
-                    settings.CustomSpeedKeybindsEnabled,
-                    function(c)
-                        if c and not isPremium("CustomSpeedKeybinds") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use Custom Speed Keybinds!",
-                                "warning"
-                            )
-                            return
-                        end
-                        settings.CustomSpeedKeybindsEnabled = c
-                        pcall(saveSettings)
-                    end,
-                    UI.AccentCyan,
-                    "CustomSpeedKeybinds"
-                )
-                controlRegistry.CustomSpeedKeybindsEnabled = { setValue = f.setValue }
-                local function g(d)
-                    if not isPremium("CustomSpeedKeybinds") then
-                        showNotification(
-                            "Premium Feature +",
-                            "Unlock the Premium version to use Custom Speed Keybinds!",
-                            "warning"
-                        )
-                        return
-                    end
-                    if not settings.CustomSpeedKeybindsEnabled then
-                        showNotification("Custom Speed", "Enable 'Custom Speed Keybinds' toggle first!", "warning")
-                        return
-                    end
-                    if premiumHooks and type(premiumHooks.ApplyCustomSpeedKeybind) == "function" then
-                        premiumHooks.ApplyCustomSpeedKeybind(
-                            d,
-                            settings,
-                            controlRegistry,
-                            applyLocalPlayerModifiers,
-                            showNotification
-                        )
-                    else
-                        showNotification(
-                            "Premium Feature +",
-                            "Unlock the Premium version to use this feature!",
-                            "warning"
-                        )
-                    end
-                end
-                local function h(c, d, f, h)
-                    local i = "CustomSpeed" .. tostring(d)
-                    local j = Instance.new("Frame")
-                    j.Size = UDim2.new(1, 0, 0, 56)
-                    j.BackgroundColor3 = UI.Card
-                    j.BackgroundTransparency = 0.5
-                    j.BorderSizePixel = 0
-                    j.Parent = c;
-                    (Instance.new("UICorner", j)).CornerRadius = UDim.new(0, UI.CardRadius)
-                    local k = Instance.new("UIStroke", j)
-                    k.Color = UI.StrokeDim
-                    k.Thickness = 0.9
-                    local l = Instance.new("TextLabel")
-                    l.RichText = true
-                    l.Size = UDim2.new(1, -120, 0, 18)
-                    l.Position = UDim2.new(0, 10, 0, 4)
-                    l.BackgroundTransparency = 1
-                    l.Text = "Custom Speed Slot " .. (tostring(d) .. " +")
-                    l.TextColor3 = UI.Text
-                    l.Font = Enum.Font.Ubuntu
-                    l.TextSize = 12
-                    l.TextXAlignment = Enum.TextXAlignment.Left
-                    l.Parent = j
-                    table.insert(
-                        registeredPremiumLabels,
-                        { labelObj = l, originalText = "Custom Speed Slot " .. tostring(d), isPrem = true }
-                    )
-                    local m = createKeybindButton(j, h, function()
-                        g(d)
-                    end)
-                    m.Position = UDim2.new(1, -10, 0, 13)
-                    local n = settings[i] or f
-                    local o = createSliderFloat(j, "Multiplier", 1, 3, n, function(c)
-                        settings[i] = c
-                        pcall(saveSettings)
-                    end, nil, 0.01)
-                    if o and o.container then
-                        o.container.Size = UDim2.new(1, -10, 0, 28)
-                        o.container.Position = UDim2.new(0, 5, 0, 24)
-                        o.container.BackgroundTransparency = 1
-                        local c = o.container:FindFirstChildOfClass("UIStroke")
-                        if c then
-                            c.Transparency = 1
-                        end
-                    end
-                    controlRegistry[i] = o
-                end
-                h(f.content, 1, 1.02, "CustomSpeedKey1")
-                h(f.content, 2, 1.15, "CustomSpeedKey2")
-                h(f.content, 3, 1.35, "CustomSpeedKey3")
                 createSection(tabSelf, "Character Perks")
                 local function i(c, d, f, g, h)
                     local i = Instance.new("Frame")
@@ -13331,13 +13068,6 @@ return (function(...)
                     nil,
                     "HideFlowstateUI"
                 )
-                local function B()
-                    if premiumHooks and type(premiumHooks.InstantBandage) == "function" then
-                        premiumHooks.InstantBandage(localPlayer, showNotification)
-                    else
-                        showNotification("Instant Bandage", "Unlock Premium version to use this feature! +", "error")
-                    end
-                end
                 local function C()
                     pcall(function()
                         local c = localPlayer.Character
@@ -13360,7 +13090,6 @@ return (function(...)
                     settings.InstantHeal = c
                     pcall(saveSettings)
                 end, nil, "InstantHeal")
-                createButton(tabSelf, "Instant Bandage", "Use", B, UI.AccentCyan, "InstantBandage")
                 local D = false
                 local E = nil
                 local function F()
@@ -13572,28 +13301,6 @@ return (function(...)
                     nil,
                     "NoclipVaultsPallets"
                 )
-                controlRegistry.AutoFleeKiller = createToggle(
-                    tabSelf,
-                    "Auto Flee Killer (Dist &lt; 35)",
-                    settings.AutoFleeKiller,
-                    function(c)
-                        if c and not isPremium("AutoFleeKiller") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.AutoFleeKiller and controlRegistry.AutoFleeKiller.setValue then
-                                controlRegistry.AutoFleeKiller.setValue(false)
-                            end
-                            return
-                        end
-                        settings.AutoFleeKiller = c
-                        pcall(saveSettings)
-                    end,
-                    nil,
-                    "AutoFleeKiller"
-                )
                 local G = createCollapsibleToggle(tabSelf, "Auto Moonwalk", settings.AutoMoonwalk, function(c)
                     settings.AutoMoonwalk = c
                     if not c then
@@ -13757,28 +13464,6 @@ return (function(...)
                     end
                 )
                 createSection(tabSelf, "Pallet & Vault Modifiers", UI.Accent)
-                controlRegistry.AlwaysFastVault = createToggle(
-                    tabSelf,
-                    "Always Fast Vault",
-                    settings.AlwaysFastVault,
-                    function(c)
-                        if c and not isPremium("AlwaysFastVault") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.AlwaysFastVault and controlRegistry.AlwaysFastVault.setValue then
-                                controlRegistry.AlwaysFastVault.setValue(false)
-                            end
-                            return
-                        end
-                        settings.AlwaysFastVault = c
-                        pcall(saveSettings)
-                    end,
-                    UI.AccentCyan,
-                    "AlwaysFastVault"
-                )
                 controlRegistry.NoTurnSpeedLoss = createToggle(
                     tabSelf,
                     "No Turn Speed Loss",
@@ -13968,385 +13653,6 @@ return (function(...)
                     UI.AccentCyan
                 )
                 createButton(tabSelf, "Drop Target Pallet", "Drop", N, UI.AccentCyan, "RemoteDropPalletKey")
-                do
-                    local function d()
-                        if premiumHooks and type(premiumHooks.BlockVaults) == "function" then
-                            premiumHooks.BlockVaults(cachedVaults, showNotification)
-                        else
-                            showNotification("Block Vaults", "Unlock Premium version to use this feature! +", "error")
-                        end
-                    end
-                    local function f()
-                        if premiumHooks and type(premiumHooks.BlockPallets) == "function" then
-                            premiumHooks.BlockPallets(cachedPallets, showNotification)
-                        else
-                            showNotification("Block Pallets", "Unlock Premium version to use this feature! +", "error")
-                        end
-                    end
-                    local function g()
-                        if premiumHooks and type(premiumHooks.UnlockVaults) == "function" then
-                            premiumHooks.UnlockVaults(showNotification)
-                        else
-                            showNotification("Unlock Vaults", "Unlock Premium version to use this feature! +", "error")
-                        end
-                    end
-                    local function h()
-                        if premiumHooks and type(premiumHooks.UnlockPallets) == "function" then
-                            premiumHooks.UnlockPallets(cachedPallets, showNotification)
-                        else
-                            showNotification("Unlock Pallets", "Unlock Premium version to use this feature! +", "error")
-                        end
-                    end
-                    local function i()
-                        f()
-                        d()
-                    end
-                    local j = createCollapsibleGroup(tabSelf, "Block Pallets/Vaults", UI.AccentRed)
-                    createButton(j.content, "Block Both", "Trigger", i, UI.AccentRed, "BlockVaultPalletInteraction")
-                    createButton(j.content, "Block Pallets", "Trigger", f, UI.AccentRed, "BlockPallets")
-                    createButton(j.content, "Block Vaults", "Trigger", d, UI.AccentRed, "BlockVaults")
-                    local function k()
-                        h()
-                        g()
-                    end
-                    local l = createCollapsibleGroup(tabSelf, "Unlock Pallets/Vaults", UI.AccentGreen)
-                    createButton(l.content, "Unlock Both", "Trigger", k, UI.AccentGreen, "UnlockVaultPalletInteraction")
-                    createButton(l.content, "Unlock Pallets", "Trigger", h, UI.AccentGreen, "UnlockPallets")
-                    createButton(l.content, "Unlock Vaults", "Trigger", g, UI.AccentGreen, "UnlockVaults")
-                end
-                createSection(tabSelf, "Dead By Daylight Modifiers", UI.Accent)
-                do
-                    local c = createCollapsibleToggle(
-                        tabSelf,
-                        "DBD Sounds",
-                        (settings.DBDSounds and settings.DBDSounds.Enabled) or false,
-                        function(c)
-                            if c and not isPremium("DBDSounds") then
-                                showNotification(
-                                    "Premium Feature +",
-                                    "Unlock the Premium version to use this feature!",
-                                    "warning"
-                                )
-                                if dbdGroup and dbdGroup.setValue then
-                                    dbdGroup.setValue(false)
-                                end
-                                return
-                            end
-                            if not settings.DBDSounds then
-                                settings.DBDSounds = {}
-                            end
-                            settings.DBDSounds.Enabled = c
-                            pcall(saveSettings)
-                            if c then
-                                if _G.VD_DBD and not _G.VD_DBD.isCached() then
-                                    _G.VD_DBD.downloadAll()
-                                end
-                                pcall(function()
-                                    for c, d in ipairs(workspace:GetDescendants()) do
-                                        if d:IsA("Sound") and (_G.VD_DBD and _G.VD_DBD.hookSound) then
-                                            _G.VD_DBD.hookSound(d)
-                                        end
-                                    end
-                                end)
-                            else
-                                if _G.VD_DBD and _G.VD_DBD.restoreSounds then
-                                    pcall(_G.VD_DBD.restoreSounds)
-                                end
-                            end
-                        end,
-                        UI.Accent,
-                        "DBDSounds"
-                    )
-                    controlRegistry["DBDSounds.Enabled"] = c
-                    local d = Instance.new("Frame")
-                    d.Size = UDim2.new(1, 0, 0, 54)
-                    d.BackgroundColor3 = UI.Card
-                    d.BackgroundTransparency = 0.75
-                    d.BorderSizePixel = 0
-                    d.Parent = c.content;
-                    (Instance.new("UICorner", d)).CornerRadius = UDim.new(0, UI.CardRadius)
-                    local f = Instance.new("UIStroke", d)
-                    f.Color = UI.StrokeDim
-                    f.Thickness = 0.8
-                    local g = _G.VD_DBD and (_G.VD_DBD.isCached and _G.VD_DBD.isCached())
-                    local h = Instance.new("TextLabel")
-                    h.Size = UDim2.new(1, -145, 0, 18)
-                    h.Position = UDim2.new(0, 10, 0, 6)
-                    h.BackgroundTransparency = 1
-                    h.Font = Enum.Font.Ubuntu
-                    h.TextSize = 11.5
-                    h.TextColor3 = UI.Text
-                    h.TextXAlignment = Enum.TextXAlignment.Left
-                    h.Text = g and "Status: Ready (10/10 Cached)" or "Status: Not Downloaded"
-                    h.Parent = d
-                    local i = Instance.new("Frame")
-                    i.Size = UDim2.new(0, 125, 0, 22)
-                    i.Position = UDim2.new(1, -133, 0, 5)
-                    i.BackgroundColor3 = UI.Elevated
-                    i.BorderSizePixel = 0
-                    i.Parent = d;
-                    (Instance.new("UICorner", i)).CornerRadius = UDim.new(0, 5)
-                    local j = Instance.new("UIStroke", i)
-                    j.Color = UI.Stroke
-                    j.Thickness = 0.8
-                    local k = Instance.new("TextButton")
-                    k.Size = UDim2.new(1, 0, 1, 0)
-                    k.BackgroundTransparency = 1
-                    k.Text = "DOWNLOAD SOUNDS"
-                    k.TextColor3 = UI.Text
-                    k.Font = Enum.Font.Ubuntu
-                    k.TextSize = 9
-                    k.AutoButtonColor = false
-                    k.Parent = i
-                    local l = Instance.new("Frame")
-                    l.Size = UDim2.new(1, -55, 0, 6)
-                    l.Position = UDim2.new(0, 10, 0, 34)
-                    l.BackgroundColor3 = (UI and UI.Bg) or Color3.fromRGB(10, 10, 14)
-                    l.BorderSizePixel = 0
-                    l.Parent = d;
-                    (Instance.new("UICorner", l)).CornerRadius = UDim.new(0, 3)
-                    local m = Instance.new("Frame")
-                    m.Size = UDim2.new(g and 1 or 0, 0, 1, 0)
-                    m.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                    m.BorderSizePixel = 0
-                    m.Parent = l;
-                    (Instance.new("UICorner", m)).CornerRadius = UDim.new(0, 3)
-                    local n = Instance.new("TextLabel")
-                    n.Size = UDim2.new(0, 40, 0, 14)
-                    n.Position = UDim2.new(1, -42, 0, 30)
-                    n.BackgroundTransparency = 1
-                    n.Font = Enum.Font.Ubuntu
-                    n.TextSize = 10
-                    n.TextColor3 = g and UI.Text or UI.TextSub
-                    n.TextXAlignment = Enum.TextXAlignment.Right
-                    n.Text = g and "100%" or "0%"
-                    n.Parent = d
-                    local function o(c, d)
-                        local f = math.clamp(c or 0, 0, 1);
-                        (TweenService:Create(
-                            m,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            { Size = UDim2.new(f, 0, 1, 0) }
-                        )):Play()
-                        n.Text = math.floor(f * 100) .. "%"
-                        if d then
-                            h.Text = d
-                            if f >= 1 then
-                                h.TextColor3 = UI.Text
-                                n.TextColor3 = UI.Text
-                            else
-                                h.TextColor3 = UI.Text
-                                n.TextColor3 = UI.TextSub
-                            end
-                        end
-                    end
-                    if _G.VD_DBD and _G.VD_DBD.registerListener then
-                        _G.VD_DBD.registerListener(o)
-                    end
-                    k.MouseButton1Click:Connect(function()
-                        if not isPremium() then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            return
-                        end
-                        if _G.VD_DBD and _G.VD_DBD.downloadAll then
-                            _G.VD_DBD.downloadAll(o)
-                        end
-                    end)
-                    k.MouseEnter:Connect(function()
-                        (TweenService:Create(i, TweenInfo.new(0.15), { BackgroundColor3 = Color3.fromRGB(34, 36, 46) })):Play()
-                    end)
-                    k.MouseLeave:Connect(function()
-                        (TweenService:Create(i, TweenInfo.new(0.15), { BackgroundColor3 = UI.Elevated })):Play()
-                    end)
-                    createButton(c.content, "Preview Random Sound", "Play", function()
-                        if not isPremium() then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            return
-                        end
-                        local c = {
-                            "Warning",
-                            "Great",
-                            "Confirm",
-                            "HookPoint",
-                            "HookHit",
-                            "PalletDrop",
-                            "ExitReady",
-                            "GenExplode",
-                            "GateOpen",
-                            "GenDone",
-                        }
-                        local d = c[math.random(1, #c)]
-                        if _G.VD_DBD and _G.VD_DBD.playPreview then
-                            _G.VD_DBD.playPreview(d)
-                        end
-                    end, UI.Accent, "PreviewRandomSound")
-                    createSlider(
-                        c.content,
-                        "DBD Sounds Volume",
-                        10,
-                        200,
-                        math.floor(((settings.DBDSounds and settings.DBDSounds.Volume) or 1) * 100),
-                        function(c)
-                            if not isPremium() then
-                                showNotification(
-                                    "Premium Feature +",
-                                    "Unlock the Premium version to use this feature!",
-                                    "warning"
-                                )
-                                return
-                            end
-                            if not settings.DBDSounds then
-                                settings.DBDSounds = {}
-                            end
-                            settings.DBDSounds.Volume = c / 100
-                            pcall(saveSettings)
-                        end,
-                        UI.Accent
-                    )
-                end
-                do
-                    local c = createCollapsibleToggle(
-                        tabSelf,
-                        "DBD Hud",
-                        (settings.DBDHud and settings.DBDHud.Enabled) or false,
-                        function(c)
-                            if c and not isPremium("DBDHud") then
-                                showNotification(
-                                    "Premium Feature +",
-                                    "Unlock the Premium version to use this feature!",
-                                    "warning"
-                                )
-                                if hudGroup and hudGroup.setValue then
-                                    hudGroup.setValue(false)
-                                end
-                                return
-                            end
-                            if not settings.DBDHud then
-                                settings.DBDHud = {}
-                            end
-                            settings.DBDHud.Enabled = c
-                            pcall(saveSettings)
-                            if c and (_G.VD_DBD_HUD and _G.VD_DBD_HUD.downloadAll) then
-                                task.spawn(_G.VD_DBD_HUD.downloadAll)
-                            end
-                        end,
-                        UI.Accent,
-                        "DBDHud"
-                    )
-                    controlRegistry["DBDHud.Enabled"] = c
-                    local d = Instance.new("Frame")
-                    d.Size = UDim2.new(1, 0, 0, 54)
-                    d.BackgroundColor3 = UI.Card
-                    d.BackgroundTransparency = 0.75
-                    d.BorderSizePixel = 0
-                    d.Parent = c.content;
-                    (Instance.new("UICorner", d)).CornerRadius = UDim.new(0, UI.CardRadius)
-                    local f = Instance.new("UIStroke", d)
-                    f.Color = UI.StrokeDim
-                    f.Thickness = 0.8
-                    local g = _G.VD_DBD_HUD and (_G.VD_DBD_HUD.isCached and _G.VD_DBD_HUD.isCached())
-                    local h = Instance.new("TextLabel")
-                    h.Size = UDim2.new(1, -145, 0, 18)
-                    h.Position = UDim2.new(0, 10, 0, 6)
-                    h.BackgroundTransparency = 1
-                    h.Font = Enum.Font.Ubuntu
-                    h.TextSize = 11.5
-                    h.TextColor3 = UI.Text
-                    h.TextXAlignment = Enum.TextXAlignment.Left
-                    h.Text = g and "Status: Ready (7/7 Cached)" or "Status: Not Downloaded"
-                    h.Parent = d
-                    local i = Instance.new("Frame")
-                    i.Size = UDim2.new(0, 125, 0, 22)
-                    i.Position = UDim2.new(1, -133, 0, 5)
-                    i.BackgroundColor3 = UI.Elevated
-                    i.BorderSizePixel = 0
-                    i.Parent = d;
-                    (Instance.new("UICorner", i)).CornerRadius = UDim.new(0, 5)
-                    local j = Instance.new("UIStroke", i)
-                    j.Color = UI.Stroke
-                    j.Thickness = 0.8
-                    local k = Instance.new("TextButton")
-                    k.Size = UDim2.new(1, 0, 1, 0)
-                    k.BackgroundTransparency = 1
-                    k.Text = "DOWNLOAD ICONS"
-                    k.TextColor3 = UI.Text
-                    k.Font = Enum.Font.Ubuntu
-                    k.TextSize = 9
-                    k.AutoButtonColor = false
-                    k.Parent = i
-                    local l = Instance.new("Frame")
-                    l.Size = UDim2.new(1, -55, 0, 6)
-                    l.Position = UDim2.new(0, 10, 0, 34)
-                    l.BackgroundColor3 = (UI and UI.Bg) or Color3.fromRGB(10, 10, 14)
-                    l.BorderSizePixel = 0
-                    l.Parent = d;
-                    (Instance.new("UICorner", l)).CornerRadius = UDim.new(0, 3)
-                    local m = Instance.new("Frame")
-                    m.Size = UDim2.new(g and 1 or 0, 0, 1, 0)
-                    m.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                    m.BorderSizePixel = 0
-                    m.Parent = l;
-                    (Instance.new("UICorner", m)).CornerRadius = UDim.new(0, 3)
-                    local n = Instance.new("TextLabel")
-                    n.Size = UDim2.new(0, 40, 0, 14)
-                    n.Position = UDim2.new(1, -42, 0, 30)
-                    n.BackgroundTransparency = 1
-                    n.Font = Enum.Font.Ubuntu
-                    n.TextSize = 10
-                    n.TextColor3 = g and UI.Text or UI.TextSub
-                    n.TextXAlignment = Enum.TextXAlignment.Right
-                    n.Text = g and "100%" or "0%"
-                    n.Parent = d
-                    local function o(c, d)
-                        local f = math.clamp(c or 0, 0, 1);
-                        (TweenService:Create(
-                            m,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            { Size = UDim2.new(f, 0, 1, 0) }
-                        )):Play()
-                        n.Text = math.floor(f * 100) .. "%"
-                        if d then
-                            h.Text = d
-                            if f >= 1 then
-                                h.TextColor3 = UI.Text
-                                n.TextColor3 = UI.Text
-                            else
-                                h.TextColor3 = UI.Text
-                                n.TextColor3 = UI.TextSub
-                            end
-                        end
-                    end
-                    if _G.VD_DBD_HUD and _G.VD_DBD_HUD.registerListener then
-                        _G.VD_DBD_HUD.registerListener(o)
-                    end
-                    k.MouseButton1Click:Connect(function()
-                        if not isPremium() then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            return
-                        end
-                        if _G.VD_DBD_HUD and _G.VD_DBD_HUD.downloadAll then
-                            _G.VD_DBD_HUD.downloadAll(o)
-                        end
-                    end)
-                    k.MouseEnter:Connect(function()
-                        (TweenService:Create(i, TweenInfo.new(0.15), { BackgroundColor3 = Color3.fromRGB(34, 36, 46) })):Play()
-                    end)
-                    k.MouseLeave:Connect(function()
-                        (TweenService:Create(i, TweenInfo.new(0.15), { BackgroundColor3 = UI.Elevated })):Play()
-                    end)
-                end
                 createSection(tabSelf, "Stat Modifiers", UI.Warning)
                 local function P(c, d)
                     local f = localPlayer:GetAttribute(d) or 0
@@ -15177,6 +14483,11 @@ return (function(...)
                     end
                 end)
             end
+            createButton(tabFarm, "Trigger Generator Buff (Max)", "Trigger", function()
+                if doCancelGen then
+                    pcall(doCancelGen)
+                end
+            end, UI.Accent, "CancelGen")
         end
         buildSpeedControls()
         local function buildCombatTab()
@@ -15293,33 +14604,6 @@ return (function(...)
                     "IgnoreAbysswalkerLunge"
                 )
                 local g = false
-                local function h()
-                    if not isPremium("HideParryUI") then
-                        showNotification(
-                            "Premium Feature +",
-                            "Unlock the Premium version to use this feature!",
-                            "warning"
-                        )
-                        return
-                    end
-                    if premiumHooks and type(premiumHooks.SimulateParryAnimation) == "function" then
-                        premiumHooks.SimulateParryAnimation(localPlayer, showNotification)
-                    else
-                        showNotification(
-                            "Premium Feature +",
-                            "Unlock the Premium version to use this feature!",
-                            "warning"
-                        )
-                    end
-                end
-                controlRegistry.SimulateParryAnimation = createButton(
-                    f.content,
-                    "Simulate Parry Animation",
-                    "Trigger",
-                    h,
-                    UI.AccentCyan,
-                    "SimulateParryAnimation"
-                )
                 controlRegistry.HideParryUI = createToggle(
                     f.content,
                     "Hide Parry Cooldown UI",
@@ -15959,116 +15243,6 @@ return (function(...)
                         pcall(saveSettings)
                         pcall(setupVisuals)
                     end
-                )
-                local o = createCollapsibleToggle(
-                    n.content,
-                    "Enable Veil Spear Aimbot",
-                    settings.SpearAimbot.Enabled,
-                    function(c)
-                        if c and not isPremium("SpearAimbot") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if spearGroup and spearGroup.setValue then
-                                spearGroup.setValue(false)
-                            end
-                            return
-                        end
-                        settings.SpearAimbot.Enabled = c
-                        pcall(saveSettings)
-                    end,
-                    UI.AccentOrange,
-                    "SpearAimbot"
-                )
-                controlRegistry["SpearAimbot.Enabled"] = { setValue = o.setValue }
-                controlRegistry["SpearAimbot.Key"] = createSelector(
-                    o.content,
-                    "Aimbot Activation Key",
-                    { "Right Mouse", "Left Mouse", "E Key", "Q Key", "Shift Key" },
-                    { "MouseButton2", "MouseButton1", "E", "Q", "LeftShift" },
-                    settings.SpearAimbot.Key,
-                    function(c)
-                        settings.SpearAimbot.Key = c
-                        pcall(saveSettings)
-                    end
-                )
-                controlRegistry["SpearAimbot.TargetPart"] = createSelector(
-                    o.content,
-                    "Aimbot Target Part",
-                    { "Head", "Torso", "RootPart" },
-                    { "Head", "UpperTorso", "HumanoidRootPart" },
-                    settings.SpearAimbot.TargetPart,
-                    function(c)
-                        settings.SpearAimbot.TargetPart = c
-                        pcall(saveSettings)
-                    end
-                )
-                controlRegistry["SpearAimbot.Priority"] = createSelector(
-                    o.content,
-                    "Target Prioritizer",
-                    {
-                        "Nearest (FOV)",
-                        "Furthest (FOV)",
-                        "Injured (Low HP)",
-                        "Healed (High HP)",
-                        "Nearest + Injured",
-                        "Nearest + Healed",
-                        "Furthest + Injured",
-                        "Furthest + Healed",
-                    },
-                    {
-                        "Nearest",
-                        "Furthest",
-                        "Injured",
-                        "Healed",
-                        "NearestInjured",
-                        "NearestHealed",
-                        "FurthestInjured",
-                        "FurthestHealed",
-                    },
-                    settings.SpearAimbot.Priority or "Nearest",
-                    function(c)
-                        settings.SpearAimbot.Priority = c
-                        pcall(saveSettings)
-                    end
-                )
-                controlRegistry["SpearAimbot.Smoothness"] = createSelector(
-                    o.content,
-                    "Aimbot Smoothness",
-                    { "Instant", "Very Smooth", "Smooth", "Normal" },
-                    { 0, 0.05, 0.15, 0.3 },
-                    settings.SpearAimbot.Smoothness,
-                    function(c)
-                        settings.SpearAimbot.Smoothness = c
-                        pcall(saveSettings)
-                    end
-                )
-                controlRegistry["SpearAimbot.Radius"] = createSlider(
-                    o.content,
-                    "Aimbot FOV Radius",
-                    50,
-                    400,
-                    settings.SpearAimbot.Radius,
-                    function(c)
-                        settings.SpearAimbot.Radius = c
-                        pcall(saveSettings)
-                    end,
-                    UI.AccentOrange
-                )
-                controlRegistry["SpearAimbot.PredictionOffset"] = createSlider(
-                    o.content,
-                    "Prediction Latency Offset",
-                    0,
-                    200,
-                    math.floor((settings.SpearAimbot.PredictionOffset or 0.05) * 1000),
-                    function(c)
-                        settings.SpearAimbot.PredictionOffset = c / 1000
-                        pcall(saveSettings)
-                    end,
-                    UI.AccentOrange,
-                    " ms"
                 )
                 local p = createCollapsibleToggle(
                     n.content,
@@ -18823,12 +17997,6 @@ return (function(...)
                         if settings.NoclipVaultsPallets then
                             table.insert(k, "Noclip Vaults & Pallets")
                         end
-                        if settings.AlwaysFastVault then
-                            table.insert(k, "Always Fast Vault")
-                        end
-                        if settings.AutoFleeKiller then
-                            table.insert(k, "Auto Flee Killer")
-                        end
                         if settings.MasterESP then
                             table.insert(k, "ESP Master Switch")
                         end
@@ -18840,9 +18008,6 @@ return (function(...)
                         end
                         if settings.RemoveDOF then
                             table.insert(k, "DOF Removal")
-                        end
-                        if settings.NoSkillChecks then
-                            table.insert(k, "No Skill Checks")
                         end
                         if settings.InstantHeal then
                             table.insert(k, "Instant Heal")
