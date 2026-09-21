@@ -7,6 +7,21 @@ return (function(...)
             RevolverAutofarm = true,
             FakeLag = true,
             Desync = true,
+            Stalker = true,
+            BypassToFRestrictions = true,
+            InfoBanner = true,
+            CustomLighting = true,
+            VisualCustomization = true,
+            SunRays = true,
+            RTXGraphics = true,
+            CustomFog = true,
+            CustomBloom = true,
+            NoclipVaultsPallets = true,
+            MovementMoonwalk = true,
+            Masked = true,
+            CinematicDOF = true,
+            CustomBackground = true,
+            SpearTrajectory = true,
         }
         local premiumUnlocked = true
         local premiumPayloadReady = true
@@ -2561,8 +2576,6 @@ return (function(...)
         if settings.RevolverAutofarm and premiumVerified then
             settings.InstantHeal = true
         end
-        settings.NoSkillChecks = false
-        settings.AlwaysFastVault = false
         settings.AutoFleeKiller = false
         settings.AntiWiggle = false
         settings.CustomSpeedKeybindsEnabled = false
@@ -3098,10 +3111,6 @@ return (function(...)
         end
         local soundPreviewInstance = nil
         function playSoundPreview(c)
-            if not isPremium() then
-                showNotification("Premium Feature +", "Unlock the Premium version to use this feature!", "warning")
-                return
-            end
             if soundPreviewInstance then
                 pcall(function()
                     soundPreviewInstance:Stop()
@@ -6259,7 +6268,6 @@ return (function(...)
                     settings.CustomBackground.Enabled
                     and (
                         isPremium()
-                        and (premiumHooks and (premiumHooks.CustomBackground or premiumHooks["Custom Background"]))
                     )
                 )
             mainFrame.BackgroundTransparency = r and 1 or f.BgTrans
@@ -7583,11 +7591,7 @@ return (function(...)
         customBgOverlay.Parent = mainFrame
         applyCustomBackground = function()
             local d = mainFrame:FindFirstChild("Sidebar")
-            local f = isPremium()
-                and (
-                    (premiumHooks and (premiumHooks.CustomBackground or premiumHooks["Custom Background"]))
-                    and (settings.CustomBackground and settings.CustomBackground.Enabled)
-                )
+            local f = settings.CustomBackground and settings.CustomBackground.Enabled
             if not f then
                 customBgImage.Visible = false
                 customBgOverlay.Visible = false
@@ -8882,14 +8886,7 @@ return (function(...)
                     and (
                         settings.CustomBackground.Enabled
                         and (
-                            isPremium()
-                            and (
-                                premiumHooks
-                                and (
-                                    (premiumHooks.CustomBackground or premiumHooks["Custom Background"])
-                                    and (customBgImage and customBgImage.Visible)
-                                )
-                            )
+                            customBgImage and customBgImage.Visible
                         )
                     )
                 local i = f and 1 or g.BgTrans
@@ -10469,15 +10466,6 @@ return (function(...)
             return createColorWheel(a, b, c, d)
         end
         function setRevolverAutofarm(c)
-            if c and not isPremium("RevolverAutofarm") then
-                showNotification("Premium Feature +", "Unlock the Premium version to use this feature!", "warning")
-                if controlRegistry.RevolverAutofarm and controlRegistry.RevolverAutofarm.setValue then
-                    pcall(function()
-                        controlRegistry.RevolverAutofarm.setValue(false)
-                    end)
-                end
-                return
-            end
             settings.RevolverAutofarm = c
             if c then
                 if not settings.InstantHeal then
@@ -12312,14 +12300,6 @@ return (function(...)
                         (TweenService:Create(g, TweenInfo.new(0.15), { Thickness = 1, Color = UI.Stroke })):Play()
                     end)
                     f.MouseButton1Click:Connect(function()
-                        if not isPremium() then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            return
-                        end
                         if u then
                             return
                         end
@@ -12503,6 +12483,29 @@ return (function(...)
                         pcall(saveSettings)
                     end,
                     UI.Accent
+                )
+                controlRegistry.NoSkillChecks = createToggle(
+                    p.content,
+                    "No Skill Checks (Remove Checks)",
+                    settings.NoSkillChecks,
+                    function(c)
+                        settings.NoSkillChecks = c
+                        pcall(saveSettings)
+                        local d = localPlayer.Character
+                        if d then
+                            if c then
+                                if _G.VD_StashSkillchecks then
+                                    pcall(_G.VD_StashSkillchecks)
+                                end
+                            else
+                                if _G.VD_RestoreSkillchecks then
+                                    pcall(_G.VD_RestoreSkillchecks)
+                                end
+                            end
+                        end
+                    end,
+                    UI.Accent,
+                    "NoSkillChecks"
                 )
                 createSection(tabFarm, "Killer Automations", UI.Accent)
                 local r = createToggle(tabFarm, "Killer Auto Farm", settings.AutoFarmKiller, function(c)
@@ -13286,17 +13289,6 @@ return (function(...)
                     "Noclip Vaults & Pallets",
                     settings.NoclipVaultsPallets,
                     function(c)
-                        if c and not isPremium("NoclipVaultsPallets") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.NoclipVaultsPallets and controlRegistry.NoclipVaultsPallets.setValue then
-                                controlRegistry.NoclipVaultsPallets.setValue(false)
-                            end
-                            return
-                        end
                         settings.NoclipVaultsPallets = c
                         pcall(saveSettings)
                     end,
@@ -13331,19 +13323,6 @@ return (function(...)
                     "Movement-Based Moonwalk",
                     settings.MoonwalkMovementBased,
                     function(c)
-                        if c and not isPremium("MovementMoonwalk") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if
-                                controlRegistry.MoonwalkMovementBased and controlRegistry.MoonwalkMovementBased.setValue
-                            then
-                                controlRegistry.MoonwalkMovementBased.setValue(false)
-                            end
-                            return
-                        end
                         settings.MoonwalkMovementBased = c
                         pcall(saveSettings)
                     end
@@ -13466,6 +13445,17 @@ return (function(...)
                     end
                 )
                 createSection(tabSelf, "Pallet & Vault Modifiers", UI.Accent)
+                controlRegistry.AlwaysFastVault = createToggle(
+                    tabSelf,
+                    "Always Fast Vault",
+                    settings.AlwaysFastVault,
+                    function(c)
+                        settings.AlwaysFastVault = c
+                        pcall(saveSettings)
+                    end,
+                    UI.AccentCyan,
+                    "AlwaysFastVault"
+                )
                 controlRegistry.NoTurnSpeedLoss = createToggle(
                     tabSelf,
                     "No Turn Speed Loss",
@@ -14611,17 +14601,6 @@ return (function(...)
                     "Hide Parry Cooldown UI",
                     settings.HideParryUI,
                     function(c)
-                        if c and not isPremium("HideParryUI") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.HideParryUI and controlRegistry.HideParryUI.setValue then
-                                controlRegistry.HideParryUI.setValue(false)
-                            end
-                            return
-                        end
                         settings.HideParryUI = c
                         pcall(saveSettings)
                         if c then
@@ -14991,17 +14970,6 @@ return (function(...)
                     "Revolver Silent Aim",
                     settings.RevolverSilentAim and settings.RevolverSilentAim.Enabled,
                     function(c)
-                        if c and not isPremium("RevolverSilentAim") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if revolverSilentAimGroup and revolverSilentAimGroup.setValue then
-                                revolverSilentAimGroup.setValue(false)
-                            end
-                            return
-                        end
                         if not settings.RevolverSilentAim then
                             settings.RevolverSilentAim = {}
                         end
@@ -15167,19 +15135,6 @@ return (function(...)
                     "Bypass Restrictions (Always Shoot ToF)",
                     settings.BypassToFRestrictions,
                     function(c)
-                        if c and not isPremium("BypassToFRestrictions") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if
-                                controlRegistry.BypassToFRestrictions and controlRegistry.BypassToFRestrictions.setValue
-                            then
-                                controlRegistry.BypassToFRestrictions.setValue(false)
-                            end
-                            return
-                        end
                         settings.BypassToFRestrictions = c
                         pcall(saveSettings)
                     end,
@@ -15193,17 +15148,6 @@ return (function(...)
                     "Veil Spear Trajectory",
                     settings.SpearTrajectory,
                     function(c)
-                        if c and not isPremium("SpearTrajectory") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.SpearTrajectory and controlRegistry.SpearTrajectory.setValue then
-                                controlRegistry.SpearTrajectory.setValue(false)
-                            end
-                            return
-                        end
                         settings.SpearTrajectory = c
                         pcall(saveSettings)
                     end,
@@ -15215,19 +15159,6 @@ return (function(...)
                     "Trajectory Noclip",
                     settings.SpearTrajectoryNoclip,
                     function(c)
-                        if c and not isPremium("SpearTrajectory") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if
-                                controlRegistry.SpearTrajectoryNoclip and controlRegistry.SpearTrajectoryNoclip.setValue
-                            then
-                                controlRegistry.SpearTrajectoryNoclip.setValue(false)
-                            end
-                            return
-                        end
                         settings.SpearTrajectoryNoclip = c
                         pcall(saveSettings)
                     end,
@@ -15251,14 +15182,6 @@ return (function(...)
                     "Spear Silent Aim",
                     settings.SpearSilentAim and settings.SpearSilentAim.Enabled,
                     function(d)
-                        if d and not (isPremium() and (premiumHooks and premiumHooks.SpearSilentAim)) then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use Spear Silent Aim!",
-                                "warning"
-                            )
-                            return
-                        end
                         if not settings.SpearSilentAim then
                             settings.SpearSilentAim = {}
                         end
@@ -15416,14 +15339,6 @@ return (function(...)
                 local u = false
                 for d, f in ipairs(t) do
                     createButton(s.content, f.name, "Apply", function()
-                        if not (isPremium() and (premiumHooks and premiumHooks.Masked)) then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            return
-                        end
                         task.spawn(function()
                             if u then
                                 showNotification("Masked Buff", "Activation in progress, please wait!", "warning")
@@ -15475,19 +15390,6 @@ return (function(...)
                     "No Cooldown Stalker",
                     settings.Stalker and settings.Stalker.NoCooldown or false,
                     function(c)
-                        if c and not isPremium("Stalker") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if
-                                controlRegistry["Stalker.NoCooldown"] and controlRegistry["Stalker.NoCooldown"].setValue
-                            then
-                                controlRegistry["Stalker.NoCooldown"].setValue(false)
-                            end
-                            return
-                        end
                         if not settings.Stalker then
                             settings.Stalker = {}
                         end
@@ -15502,17 +15404,6 @@ return (function(...)
                     "Kill Grab",
                     settings.Stalker and settings.Stalker.KillGrab or false,
                     function(c)
-                        if c and not isPremium("Stalker") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry["Stalker.KillGrab"] and controlRegistry["Stalker.KillGrab"].setValue then
-                                controlRegistry["Stalker.KillGrab"].setValue(false)
-                            end
-                            return
-                        end
                         if not settings.Stalker then
                             settings.Stalker = {}
                         end
@@ -15577,19 +15468,6 @@ return (function(...)
                     "Auto Dodge",
                     settings.Stalker and settings.Stalker.AutoDodge or false,
                     function(c)
-                        if c and not isPremium("Stalker") then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if
-                                controlRegistry["Stalker.AutoDodge"] and controlRegistry["Stalker.AutoDodge"].setValue
-                            then
-                                controlRegistry["Stalker.AutoDodge"].setValue(false)
-                            end
-                            return
-                        end
                         if not settings.Stalker then
                             settings.Stalker = {}
                         end
@@ -15984,17 +15862,6 @@ return (function(...)
                     "RTX Graphics Booster",
                     settings.RTXGraphics,
                     function(c)
-                        if c and not isPremium() then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.RTXGraphics and controlRegistry.RTXGraphics.setValue then
-                                controlRegistry.RTXGraphics.setValue(false)
-                            end
-                            return
-                        end
                         settings.RTXGraphics = c
                         pcall(saveSettings)
                         if updateVisuals then
@@ -16008,17 +15875,6 @@ return (function(...)
                     "Cinematic Depth of Field",
                     settings.CinematicDOF,
                     function(c)
-                        if c and not isPremium() then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.CinematicDOF and controlRegistry.CinematicDOF.setValue then
-                                controlRegistry.CinematicDOF.setValue(false)
-                            end
-                            return
-                        end
                         settings.CinematicDOF = c
                         pcall(saveSettings)
                         if updateVisuals then
@@ -16065,19 +15921,6 @@ return (function(...)
                     },
                     settings.VisualPreset or "Default",
                     function(d)
-                        if
-                            d ~= "Default" and not (isPremium() and (premiumHooks and premiumHooks.VisualCustomization))
-                        then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.VisualPreset and controlRegistry.VisualPreset.setValue then
-                                controlRegistry.VisualPreset.setValue("Default")
-                            end
-                            return
-                        end
                         settings.VisualPreset = d
                         pcall(saveSettings)
                         if updateVisuals then
@@ -16144,17 +15987,6 @@ return (function(...)
                     { "Default", "Day", "Sunset", "Sunrise", "Night" },
                     settings.TimeOfDayPreset or "Default",
                     function(d)
-                        if d ~= "Default" and not (isPremium() and (premiumHooks and premiumHooks.CustomLighting)) then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.TimeOfDayPreset and controlRegistry.TimeOfDayPreset.setValue then
-                                controlRegistry.TimeOfDayPreset.setValue("Default")
-                            end
-                            return
-                        end
                         settings.TimeOfDayPreset = d
                         pcall(saveSettings)
                         if updateVisuals then
@@ -16168,19 +16000,6 @@ return (function(...)
                     "Custom Ambient Lighting Color",
                     settings.CustomLightingEnabled,
                     function(d)
-                        if d and not (isPremium() and (premiumHooks and premiumHooks.CustomLighting)) then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if
-                                controlRegistry.CustomLightingEnabled and controlRegistry.CustomLightingEnabled.setValue
-                            then
-                                controlRegistry.CustomLightingEnabled.setValue(false)
-                            end
-                            return
-                        end
                         settings.CustomLightingEnabled = d
                         pcall(saveSettings)
                         if updateVisuals then
@@ -16202,17 +16021,6 @@ return (function(...)
                     "Sun Rays (God Rays)",
                     settings.SunRaysEnabled,
                     function(d)
-                        if d and not (isPremium() and (premiumHooks and premiumHooks.SunRays)) then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.SunRaysEnabled and controlRegistry.SunRaysEnabled.setValue then
-                                controlRegistry.SunRaysEnabled.setValue(false)
-                            end
-                            return
-                        end
                         settings.SunRaysEnabled = d
                         pcall(saveSettings)
                         if updateVisuals then
@@ -16242,17 +16050,6 @@ return (function(...)
                     "Enable Custom Fog Color",
                     settings.CustomFogEnabled,
                     function(d)
-                        if d and not (isPremium() and (premiumHooks and premiumHooks.CustomFog)) then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.CustomFogEnabled and controlRegistry.CustomFogEnabled.setValue then
-                                controlRegistry.CustomFogEnabled.setValue(false)
-                            end
-                            return
-                        end
                         settings.CustomFogEnabled = d
                         pcall(saveSettings)
                         if updateVisuals then
@@ -16289,17 +16086,6 @@ return (function(...)
                     "Enable Custom Bloom Effect",
                     settings.CustomBloomEnabled,
                     function(d)
-                        if d and not (isPremium() and (premiumHooks and premiumHooks.CustomBloom)) then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.CustomBloomEnabled and controlRegistry.CustomBloomEnabled.setValue then
-                                controlRegistry.CustomBloomEnabled.setValue(false)
-                            end
-                            return
-                        end
                         settings.CustomBloomEnabled = d
                         pcall(saveSettings)
                         if updateVisuals then
@@ -16415,27 +16201,6 @@ return (function(...)
                     "Custom Background",
                     settings.CustomBackground and settings.CustomBackground.Enabled or false,
                     function(d)
-                        if
-                            d
-                            and (
-                                not isPremium()
-                                or not (
-                                    premiumHooks and (
-                                        premiumHooks.CustomBackground or premiumHooks["Custom Background"]
-                                    )
-                                )
-                            )
-                        then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            if controlRegistry.CustomBg_Enabled and controlRegistry.CustomBg_Enabled.setValue then
-                                controlRegistry.CustomBg_Enabled.setValue(false)
-                            end
-                            return
-                        end
                         settings.CustomBackground = settings.CustomBackground or {}
                         settings.CustomBackground.Enabled = d
                         pcall(saveSettings)
@@ -16461,16 +16226,6 @@ return (function(...)
                         f,
                         g,
                         function(d)
-                            if
-                                not isPremium()
-                                or not (
-                                    premiumHooks and (
-                                        premiumHooks.CustomBackground or premiumHooks["Custom Background"]
-                                    )
-                                )
-                            then
-                                return
-                            end
                             settings.CustomBackground = settings.CustomBackground or {}
                             settings.CustomBackground.LocalFile = d
                             if controlRegistry.CustomBg_LocalFile and controlRegistry.CustomBg_LocalFile.setValue then
@@ -16489,16 +16244,6 @@ return (function(...)
                         "bg.png (nella cartella workspace)",
                         settings.CustomBackground and settings.CustomBackground.LocalFile or "",
                         function(d)
-                            if
-                                not isPremium()
-                                or not (
-                                    premiumHooks and (
-                                        premiumHooks.CustomBackground or premiumHooks["Custom Background"]
-                                    )
-                                )
-                            then
-                                return
-                            end
                             settings.CustomBackground = settings.CustomBackground or {}
                             settings.CustomBackground.LocalFile = d
                             pcall(saveSettings)
@@ -16514,14 +16259,6 @@ return (function(...)
                     "rbxassetid://...",
                     settings.CustomBackground and settings.CustomBackground.AssetId or "",
                     function(d)
-                        if
-                            not isPremium()
-                            or not (
-                                premiumHooks and (premiumHooks.CustomBackground or premiumHooks["Custom Background"])
-                            )
-                        then
-                            return
-                        end
                         settings.CustomBackground = settings.CustomBackground or {}
                         settings.CustomBackground.AssetId = d
                         pcall(saveSettings)
@@ -16537,14 +16274,6 @@ return (function(...)
                     70,
                     math.min(70, settings.CustomBackground and settings.CustomBackground.Overlay or 40),
                     function(d)
-                        if
-                            not isPremium()
-                            or not (
-                                premiumHooks and (premiumHooks.CustomBackground or premiumHooks["Custom Background"])
-                            )
-                        then
-                            return
-                        end
                         settings.CustomBackground = settings.CustomBackground or {}
                         settings.CustomBackground.Overlay = math.min(70, d)
                         pcall(saveSettings)
@@ -16561,14 +16290,6 @@ return (function(...)
                     { "Crop", "Stretch", "Fit" },
                     settings.CustomBackground and settings.CustomBackground.ScaleType or "Crop",
                     function(d)
-                        if
-                            not isPremium()
-                            or not (
-                                premiumHooks and (premiumHooks.CustomBackground or premiumHooks["Custom Background"])
-                            )
-                        then
-                            return
-                        end
                         settings.CustomBackground = settings.CustomBackground or {}
                         settings.CustomBackground.ScaleType = d
                         pcall(saveSettings)
@@ -16585,7 +16306,6 @@ return (function(...)
                         settings.CustomBackground.Enabled
                         and (
                             isPremium()
-                            and (premiumHooks and (premiumHooks.CustomBackground or premiumHooks["Custom Background"]))
                         )
                     )
                 then
@@ -17323,14 +17043,6 @@ return (function(...)
                     "Show Map/Killer/Perks Banner",
                     settings.ShowInfoBanner,
                     function(d)
-                        if not (isPremium() and (premiumHooks and premiumHooks.InfoBanner)) then
-                            showNotification(
-                                "Premium Feature +",
-                                "Unlock the Premium version to use this feature!",
-                                "warning"
-                            )
-                            return
-                        end
                         settings.ShowInfoBanner = d
                         pcall(saveSettings)
                         local f = screenGui:FindFirstChild("VD_InfoBanner")
@@ -17448,22 +17160,6 @@ return (function(...)
                     function(c)
                         local d = c:gsub(" %%s*%%[+%%]", "")
                         local f = (d ~= "Default" and d ~= "Old")
-                        if f and (not isPremium() and freeNoticeFlag) then
-                            showNotification(
-                                "Premium Theme +",
-                                "Unlock the Premium version to use this theme!",
-                                "warning"
-                            )
-                            settings.Theme = "Default"
-                            pcall(saveSettings)
-                            if controlRegistry.Theme and controlRegistry.Theme.setValue then
-                                pcall(function()
-                                    controlRegistry.Theme.setValue("Default")
-                                end)
-                            end
-                            pcall(applyTheme, "Default")
-                            return
-                        end
                         settings.Theme = d
                         pcall(saveSettings)
                         pcall(applyTheme, d)
@@ -17973,6 +17669,9 @@ return (function(...)
                         if settings.NoclipVaultsPallets then
                             table.insert(k, "Noclip Vaults & Pallets")
                         end
+                        if settings.AlwaysFastVault then
+                            table.insert(k, "Always Fast Vault")
+                        end
                         if settings.MasterESP then
                             table.insert(k, "ESP Master Switch")
                         end
@@ -17984,6 +17683,9 @@ return (function(...)
                         end
                         if settings.RemoveDOF then
                             table.insert(k, "DOF Removal")
+                        end
+                        if settings.NoSkillChecks then
+                            table.insert(k, "No Skill Checks")
                         end
                         if settings.InstantHeal then
                             table.insert(k, "Instant Heal")
@@ -19280,7 +18982,7 @@ return (function(...)
                         settings.InfoBannerPositionScaleY or 0,
                         settings.InfoBannerPositionOffsetY or (isMobile and 6 or 10)
                     )
-                    d.Visible = settings.ShowInfoBanner and (isPremium() and (premiumHooks and premiumHooks.InfoBanner))
+                    d.Visible = settings.ShowInfoBanner
                 end
             end)
         end
@@ -20667,7 +20369,7 @@ return (function(...)
                 end)
             end
             if
-                settings.NoclipVaultsPallets and (isPremium() and (premiumHooks and premiumHooks.NoclipVaultsPallets))
+                settings.NoclipVaultsPallets
             then
                 pcall(function()
                     for c, d in ipairs(cachedVaults) do
@@ -20794,11 +20496,7 @@ return (function(...)
                             if
                                 settings.MoonwalkMovementBased
                                 and (
-                                    isPremium()
-                                    and (
-                                        premiumHooks
-                                        and (premiumHooks.MovementMoonwalk and h.MoveDirection.Magnitude > 0.01)
-                                    )
+                                    h.MoveDirection.Magnitude > 0.01
                                 )
                             then
                                 local c = h.MoveDirection:Dot(i.CFrame.LookVector)
@@ -21016,20 +20714,6 @@ return (function(...)
             end
             local f = {}
             _G.VD_StashedSkillchecks = f
-            _G.VD_StashSkillchecks = function()
-                if
-                    not (
-                        isPremium("NoSkillChecks") and (premiumHooks and type(premiumHooks.NoSkillChecks) == "function")
-                    )
-                then
-                    return
-                end
-                local d = localPlayer.Character
-                if not d then
-                    return
-                end
-                premiumHooks.NoSkillChecks(d, f)
-            end
             _G.VD_RestoreSkillchecks = function()
                 local c = localPlayer.Character
                 if not c then
@@ -21046,12 +20730,7 @@ return (function(...)
                 table.clear(f)
             end
             local function g(d)
-                if
-                    settings.NoSkillChecks
-                    and (
-                        isPremium("NoSkillChecks") and (premiumHooks and type(premiumHooks.NoSkillChecks) == "function")
-                    )
-                then
+                if settings.NoSkillChecks then
                     local c = d.Name:lower()
                     if c:find("skillcheck") then
                         if not table.find(f, d) then
@@ -21068,6 +20747,15 @@ return (function(...)
                     g(b)
                 end
             end)
+            _G.VD_StashSkillchecks = function()
+                local d = localPlayer.Character
+                if not d then
+                    return
+                end
+                for a, b in ipairs(d:GetChildren()) do
+                    g(b)
+                end
+            end
             skillcheckChildAddedConn = d.ChildAdded:Connect(g)
             task.spawn(function()
                 local c = d:WaitForChild("Humanoid", 10)
@@ -23754,7 +23442,7 @@ return (function(...)
                 return false
             end
             while activeLoop do
-                if settings.RevolverAutofarm and (isPremium() and (premiumHooks and premiumHooks.RevolverAutofarm)) then
+                if settings.RevolverAutofarm then
                     pcall(function()
                         local c = localPlayer.Team and localPlayer.Team.Name or ""
                         if c == "Survivors" then
@@ -23976,7 +23664,6 @@ return (function(...)
                             if f <= 3 and f > 0 then
                                 if
                                     settings.RevolverAutofarm
-                                    and (isPremium() and (premiumHooks and premiumHooks.RevolverAutofarm))
                                 then
                                     setRevolverAutofarm(false)
                                     showNotification(
@@ -27056,7 +26743,7 @@ return (function(...)
                     not (
                         settings.BypassToFRestrictions
                         and (
-                            isPremium("BypassToFRestrictions") and (premiumHooks and premiumHooks.BypassToFRestrictions)
+                            isPremium("BypassToFRestrictions")
                         )
                     )
                 then
@@ -27216,10 +26903,7 @@ return (function(...)
                             if
                                 not (
                                     settings.BypassToFRestrictions
-                                    and (
-                                        isPremium("BypassToFRestrictions")
-                                        and (premiumHooks and premiumHooks.BypassToFRestrictions)
-                                    )
+                                    and isPremium("BypassToFRestrictions")
                                 )
                             then
                                 return
@@ -27312,10 +26996,7 @@ return (function(...)
                 local g = d
                     and (
                         settings.BypassToFRestrictions
-                        and (
-                            isPremium("BypassToFRestrictions")
-                            and (premiumHooks and (premiumHooks.BypassToFRestrictions and h()))
-                        )
+                        and (isPremium("BypassToFRestrictions") and h())
                     )
                 if not g then
                     if r and r.Parent then
@@ -27473,7 +27154,7 @@ return (function(...)
                     not (
                         settings.BypassToFRestrictions
                         and (
-                            isPremium("BypassToFRestrictions") and (premiumHooks and premiumHooks.BypassToFRestrictions)
+                            isPremium("BypassToFRestrictions")
                         )
                     )
                 then
@@ -30185,7 +29866,7 @@ return (function(...)
                         not (
                             settings.Stalker
                             and (
-                                settings.Stalker.AutoDodge and (isPremium() and (premiumHooks and premiumHooks.Stalker))
+                                settings.Stalker.AutoDodge
                             )
                         )
                     then
@@ -30259,9 +29940,9 @@ return (function(...)
                     return
                 end
                 local m = settings.Stalker
-                    and (settings.Stalker.NoCooldown and (isPremium() and (premiumHooks and premiumHooks.Stalker)))
+                    and (settings.Stalker.NoCooldown)
                 local n = settings.Stalker
-                    and (settings.Stalker.KillGrab and (isPremium() and (premiumHooks and premiumHooks.Stalker)))
+                    and (settings.Stalker.KillGrab)
                 if not m then
                     return
                 end
@@ -30432,7 +30113,7 @@ return (function(...)
                         local k = settings.Stalker
                             and (
                                 settings.Stalker.NoCooldown and (
-                                    isPremium() and (premiumHooks and premiumHooks.Stalker)
+                                    isPremium()
                                 )
                             )
                         if not k then
@@ -30455,7 +30136,7 @@ return (function(...)
                         j = true
                         local r = settings.Stalker
                             and (
-                                settings.Stalker.KillGrab and (isPremium() and (premiumHooks and premiumHooks.Stalker))
+                                settings.Stalker.KillGrab
                             )
                         local s = nil
                         pcall(function()
@@ -30689,12 +30370,12 @@ return (function(...)
                         end
                         return g
                     end
-                    local g = settings.RTXGraphics and (isPremium() and (premiumHooks and premiumHooks.RTXGraphics))
-                    local h = isPremium() and (premiumHooks and premiumHooks.VisualCustomization)
-                    local i = isPremium() and (premiumHooks and premiumHooks.CustomFog)
-                    local j = isPremium() and (premiumHooks and premiumHooks.CustomLighting)
-                    local k = isPremium() and (premiumHooks and premiumHooks.CustomBloom)
-                    local l = isPremium() and (premiumHooks and premiumHooks.SunRays)
+                    local g = settings.RTXGraphics
+                    local h = isPremium()
+                    local i = isPremium()
+                    local j = isPremium()
+                    local k = isPremium()
+                    local l = isPremium()
                     local m = (h and settings.VisualPreset) or "Default"
                     local n = 0
                     local o = 0
@@ -30841,7 +30522,7 @@ return (function(...)
                             end
                         end
                     end
-                    if settings.CinematicDOF and (isPremium() and (premiumHooks and premiumHooks.CinematicDOF)) then
+                    if settings.CinematicDOF then
                         local c = f("DepthOfFieldEffect", "Helper_DOF")
                         c.Enabled = true
                         c.FocusDistance = 25
@@ -30860,7 +30541,7 @@ return (function(...)
             local i = false
             local j = game:GetService("RunService")
             registerConnection(j.Heartbeat:Connect(function()
-                if settings.RTXGraphics and (isPremium() and (premiumHooks and premiumHooks.RTXGraphics)) then
+                if settings.RTXGraphics then
                     d.Ambient = Color3.fromRGB(35, 30, 45)
                     d.OutdoorAmbient = Color3.fromRGB(45, 40, 55)
                     d.Brightness = 2.5
@@ -32855,7 +32536,7 @@ return (function(...)
             end)
             while activeLoop do
                 pcall(function()
-                    local d = settings.ShowInfoBanner and (isPremium() and (premiumHooks and premiumHooks.InfoBanner))
+                    local d = settings.ShowInfoBanner
                     if not d then
                         if r.Visible then
                             r.Visible = false

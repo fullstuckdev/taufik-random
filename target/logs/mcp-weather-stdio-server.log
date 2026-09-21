@@ -1,0 +1,13 @@
+2026-09-21T23:03:08.458+07:00  INFO 86674 --- [discord-mcp] [main] dev.saseq.DiscordMcpApplication          : Starting DiscordMcpApplication v0.0.1 using Java 17.0.18 with PID 86674 (/Users/taufikmulyawan/Documents/working/MCP-custom/discord-mcp/target/discord-mcp-0.0.1.jar started by taufikmulyawan in /Users/taufikmulyawan/Documents/violencedistrict-giveaway)
+2026-09-21T23:03:08.460+07:00  INFO 86674 --- [discord-mcp] [main] dev.saseq.DiscordMcpApplication          : No active profile set, falling back to 1 default profile: "default"
+2026-09-21T23:03:09.431+07:00  INFO 86674 --- [discord-mcp] [main] net.dv8tion.jda.api.JDA                  : Login Successful!
+2026-09-21T23:03:09.548+07:00  INFO 86674 --- [discord-mcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable tools capabilities, notification: true
+2026-09-21T23:03:09.591+07:00  INFO 86674 --- [discord-mcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Registered tools: 66
+2026-09-21T23:03:09.591+07:00  INFO 86674 --- [discord-mcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable resources capabilities, notification: true
+2026-09-21T23:03:09.592+07:00  INFO 86674 --- [discord-mcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable prompts capabilities, notification: true
+2026-09-21T23:03:09.592+07:00  INFO 86674 --- [discord-mcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable completions capabilities
+2026-09-21T23:03:09.637+07:00  INFO 86674 --- [discord-mcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client initialize request - Protocol: 2025-11-25, Capabilities: ClientCapabilities[experimental=null, roots=RootCapabilities[listChanged=true], sampling=null], Info: Implementation[name=claude-code, version=2.1.278]
+2026-09-21T23:03:09.639+07:00  WARN 86674 --- [discord-mcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client requested unsupported protocol version: 2025-11-25, so the server will suggest the 2024-11-05 version instead
+2026-09-21T23:03:09.698+07:00  INFO 86674 --- [discord-mcp] [main] dev.saseq.DiscordMcpApplication          : Started DiscordMcpApplication in 1.451 seconds (process running for 1.729)
+2026-09-21T23:03:09.918+07:00  INFO 86674 --- [discord-mcp] [JDA MainWS-ReadThread] n.d.j.internal.requests.WebSocketClient  : Connected to WebSocket
+2026-09-21T23:03:11.646+07:00  INFO 86674 --- [discord-mcp] [JDA MainWS-ReadThread] net.dv8tion.jda.api.JDA                  : Finished Loading!
