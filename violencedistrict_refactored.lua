@@ -1433,7 +1433,6 @@ return (function(...)
             MoonwalkShaking = 0.05,
             MoonwalkMovementBased = false,
             NoclipVaultsPallets = false,
-            Invisible = false,
             AutoParry = false,
             ParryUseItem = false,
             ParryRange = 14,
@@ -1586,7 +1585,6 @@ return (function(...)
                 CancelGen = "None",
                 ManualSpoofGen = "None",
                 NoclipVaultsPallets = "None",
-                Invisible = "None",
                 FakeVault = "None",
                 ToggleSpeedBoost = "None",
                 CustomSpeedKey1 = "None",
@@ -1771,9 +1769,6 @@ return (function(...)
                 end
                 if settings.SpeedBoostEnabled == nil then
                     settings.SpeedBoostEnabled = false
-                end
-                if settings.Invisible == nil then
-                    settings.Invisible = false
                 end
                 if settings.CustomSpeedKeybindsEnabled == nil then
                     settings.CustomSpeedKeybindsEnabled = false
@@ -2146,7 +2141,6 @@ return (function(...)
                     "CancelGen",
                     "ManualSpoofGen",
                     "NoclipVaultsPallets",
-                    "Invisible",
                     "FakeVault",
                     "ToggleSpeedBoost",
                     "NoTurnSpeedLoss",
@@ -13285,69 +13279,6 @@ return (function(...)
                         pcall(F)
                     end
                 end, UI.Accent, "AutoSelfUnhook")
-                local invisibleOriginalEnabled = {}
-                local function applyInvisibleState(enabled)
-                    local character = localPlayer.Character
-                    if not character then
-                        return
-                    end
-                    for a, b in ipairs(character:GetDescendants()) do
-                        if b:IsA("BasePart") or b:IsA("Decal") or b:IsA("Texture") then
-                            pcall(function()
-                                b.LocalTransparencyModifier = enabled and 1 or 0
-                            end)
-                        elseif
-                            b:IsA("ParticleEmitter")
-                            or b:IsA("Trail")
-                            or b:IsA("Beam")
-                            or b:IsA("Fire")
-                            or b:IsA("Smoke")
-                            or b:IsA("Highlight")
-                        then
-                            if enabled then
-                                if invisibleOriginalEnabled[b] == nil then
-                                    invisibleOriginalEnabled[b] = b.Enabled
-                                end
-                                pcall(function()
-                                    b.Enabled = false
-                                end)
-                            elseif invisibleOriginalEnabled[b] ~= nil then
-                                pcall(function()
-                                    b.Enabled = invisibleOriginalEnabled[b]
-                                end)
-                            end
-                        end
-                    end
-                    if not enabled then
-                        table.clear(invisibleOriginalEnabled)
-                    end
-                end
-                _G.VD_ApplyInvisible = applyInvisibleState
-                registerConnection(RunService.RenderStepped:Connect(function()
-                    if settings.Invisible then
-                        applyInvisibleState(true)
-                    end
-                end))
-                registerConnection(localPlayer.CharacterAdded:Connect(function()
-                    table.clear(invisibleOriginalEnabled)
-                    if settings.Invisible then
-                        task.defer(function()
-                            applyInvisibleState(true)
-                        end)
-                    end
-                end))
-                controlRegistry.Invisible = createToggle(
-                    tabSelf,
-                    "Invisible (Local Body Hide)",
-                    settings.Invisible,
-                    function(c)
-                        settings.Invisible = c
-                        applyInvisibleState(c)
-                        pcall(saveSettings)
-                    end,
-                    nil,
-                    "Invisible"
-                )
                 controlRegistry.NoclipVaultsPallets = createToggle(
                     tabSelf,
                     "Noclip Vaults & Pallets",
@@ -17784,7 +17715,6 @@ return (function(...)
                         CancelGen = "Generator Buff",
                         ManualSpoofGen = "Manual Spoof (Gen)",
                         NoclipVaultsPallets = "Noclip Vaults & Pallets",
-                        Invisible = "Invisible",
                         FakeVault = "Fake Vault",
                         ToggleSpeedBoost = "Speed Boost",
                         CustomSpeedKey1 = "Speed Slot 1",
@@ -17891,7 +17821,6 @@ return (function(...)
                             CancelGen = "Gen Buff",
                             ManualSpoofGen = "Manual Spoof",
                             NoclipVaultsPallets = "Noclip",
-                            Invisible = "Invisible",
                             FakeVault = "Fake Vault",
                             ToggleSpeedBoost = "Speed Boost",
                             AutoParry = "Auto Parry",
@@ -18067,9 +17996,6 @@ return (function(...)
                         end
                         if settings.NoclipVaultsPallets then
                             table.insert(k, "Noclip Vaults & Pallets")
-                        end
-                        if settings.Invisible then
-                            table.insert(k, "Invisible")
                         end
                         if settings.MasterESP then
                             table.insert(k, "ESP Master Switch")
