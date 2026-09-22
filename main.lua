@@ -1473,6 +1473,8 @@ return (function(...)
             InstantHeal = false,
             BlockVaultPalletInteraction = false,
             AutoFarmKiller = false,
+            CureAutoRevive = false,
+            CureFlaskNoCooldown = false,
             RemoteDropPallet = false,
             RemoteDropPalletKey = "None",
             AutoSelfUnhook = false,
@@ -3878,6 +3880,55 @@ return (function(...)
             end
             scpCache = c
         end
+        task.spawn(function()
+            local RS = game:GetService("ReplicatedStorage")
+            local function getCorpseRemote()
+                local r = RS:FindFirstChild("Remotes")
+                r = r and r:FindFirstChild("Killers")
+                r = r and r:FindFirstChild("Cure")
+                r = r and r:FindFirstChild("corpse")
+                return r
+            end
+            local function getCureRemote(name)
+                local r = RS:FindFirstChild("Remotes")
+                r = r and r:FindFirstChild("Killers")
+                r = r and r:FindFirstChild("Cure")
+                r = r and r:FindFirstChild(name)
+                return r
+            end
+            local function isCureSelected()
+                local k = ""
+                pcall(function()
+                    k = tostring(getSelectedKiller(localPlayer))
+                end)
+                return (k:lower()):find("cure") ~= nil
+            end
+            while activeLoop do
+                task.wait(0.25)
+                local cure = isCureSelected()
+                if settings.CureAutoRevive and cure then
+                    local remote = getCorpseRemote()
+                    if remote then
+                        pcall(updateSCPCache)
+                        for a, corpse in ipairs(scpCache) do
+                            if corpse and corpse.Parent then
+                                pcall(function()
+                                    remote:FireServer(corpse)
+                                end)
+                            end
+                        end
+                    end
+                end
+                if settings.CureFlaskNoCooldown and cure then
+                    local prep = getCureRemote("PrepareFlask")
+                    if prep then
+                        pcall(function()
+                            prep:FireServer()
+                        end)
+                    end
+                end
+            end
+        end)
         local lastMapModel = nil
         local currentMapName = "Unknown Map"
         function getMapName()
@@ -15384,6 +15435,43 @@ return (function(...)
                         end)
                     end, UI.AccentCyan, f.bind)
                 end
+                local cureGroup = createCollapsibleGroup(tabCombat, "CURE", UI.Accent)
+                controlRegistry.CureAutoRevive = createToggle(
+                    cureGroup.content,
+                    "Auto Revive Corpses (No Cooldown / No Hook)",
+                    settings.CureAutoRevive,
+                    function(c)
+                        settings.CureAutoRevive = c
+                        pcall(saveSettings)
+                        if c then
+                            showNotification(
+                                "Cure Auto Revive",
+                                "Firing revive on all map corpses. Play as Cure; if the server ignores it, it means it's server-gated.",
+                                "info"
+                            )
+                        end
+                    end,
+                    nil,
+                    "CureAutoRevive"
+                )
+                controlRegistry.CureFlaskNoCooldown = createToggle(
+                    cureGroup.content,
+                    "Flask / Poison No Cooldown",
+                    settings.CureFlaskNoCooldown,
+                    function(c)
+                        settings.CureFlaskNoCooldown = c
+                        pcall(saveSettings)
+                        if c then
+                            showNotification(
+                                "Cure Flask",
+                                "Keeping the flask ready (spamming PrepareFlask). Test it; if it fights your aim, turn off.",
+                                "info"
+                            )
+                        end
+                    end,
+                    nil,
+                    "CureFlaskNoCooldown"
+                )
                 local w = createCollapsibleGroup(tabCombat, "STALKER", UI.Accent)
                 controlRegistry["Stalker.NoCooldown"] = createToggle(
                     w.content,
