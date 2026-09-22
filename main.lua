@@ -1474,7 +1474,6 @@ return (function(...)
             BlockVaultPalletInteraction = false,
             AutoFarmKiller = false,
             CureAutoRevive = false,
-            CureFlaskNoCooldown = false,
             RemoteDropPallet = false,
             RemoteDropPalletKey = "None",
             AutoSelfUnhook = false,
@@ -3889,13 +3888,6 @@ return (function(...)
                 r = r and r:FindFirstChild("corpse")
                 return r
             end
-            local function getCureRemote(name)
-                local r = RS:FindFirstChild("Remotes")
-                r = r and r:FindFirstChild("Killers")
-                r = r and r:FindFirstChild("Cure")
-                r = r and r:FindFirstChild(name)
-                return r
-            end
             local function isCureSelected()
                 local k = ""
                 pcall(function()
@@ -3917,14 +3909,6 @@ return (function(...)
                                 end)
                             end
                         end
-                    end
-                end
-                if settings.CureFlaskNoCooldown and cure then
-                    local prep = getCureRemote("PrepareFlask")
-                    if prep then
-                        pcall(function()
-                            prep:FireServer()
-                        end)
                     end
                 end
             end
@@ -15454,24 +15438,61 @@ return (function(...)
                     nil,
                     "CureAutoRevive"
                 )
-                controlRegistry.CureFlaskNoCooldown = createToggle(
-                    cureGroup.content,
-                    "Flask / Poison No Cooldown",
-                    settings.CureFlaskNoCooldown,
-                    function(c)
-                        settings.CureFlaskNoCooldown = c
-                        pcall(saveSettings)
-                        if c then
-                            showNotification(
-                                "Cure Flask",
-                                "Keeping the flask ready (spamming PrepareFlask). Test it; if it fights your aim, turn off.",
-                                "info"
-                            )
-                        end
-                    end,
-                    nil,
-                    "CureFlaskNoCooldown"
-                )
+                do
+                    local flaskRow = Instance.new("Frame")
+                    flaskRow.Size = UDim2.new(1, 0, 0, 32)
+                    flaskRow.BackgroundColor3 = UI.Card
+                    flaskRow.BackgroundTransparency = 0.5
+                    flaskRow.BorderSizePixel = 0
+                    flaskRow.Parent = cureGroup.content;
+                    (Instance.new("UICorner", flaskRow)).CornerRadius = UDim.new(0, UI.CardRadius)
+                    local flaskLbl = Instance.new("TextLabel")
+                    flaskLbl.Size = UDim2.new(1, -64, 1, 0)
+                    flaskLbl.Position = UDim2.new(0, 10, 0, 0)
+                    flaskLbl.BackgroundTransparency = 1
+                    flaskLbl.Text = "Throw Poison (No CD) - aim w/ camera"
+                    flaskLbl.TextColor3 = UI.Text
+                    flaskLbl.Font = Enum.Font.Ubuntu
+                    flaskLbl.TextSize = 12
+                    flaskLbl.TextXAlignment = Enum.TextXAlignment.Left
+                    flaskLbl.Parent = flaskRow
+                    local flaskKb = createKeybindButton(flaskRow, "CureThrowPoison", function()
+                        task.spawn(function()
+                            local k = ""
+                            pcall(function()
+                                k = tostring(getSelectedKiller(localPlayer))
+                            end)
+                            if not (k:lower()):find("cure") then
+                                return
+                            end
+                            local base = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+                            base = base and base:FindFirstChild("Killers")
+                            base = base and base:FindFirstChild("Cure")
+                            if not base then
+                                return
+                            end
+                            local char = localPlayer.Character
+                            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                            local cam = workspace.CurrentCamera
+                            if not hrp or not cam then
+                                return
+                            end
+                            local prep = base:FindFirstChild("PrepareFlask")
+                            local throw = base:FindFirstChild("ThrowFlask")
+                            if prep then
+                                pcall(function()
+                                    prep:FireServer()
+                                end)
+                            end
+                            if throw then
+                                pcall(function()
+                                    throw:FireServer(cam.CFrame.LookVector, hrp.Position)
+                                end)
+                            end
+                        end)
+                    end)
+                    flaskKb.Position = UDim2.new(1, -10, 0.5, 0)
+                end
                 local w = createCollapsibleGroup(tabCombat, "STALKER", UI.Accent)
                 controlRegistry["Stalker.NoCooldown"] = createToggle(
                     w.content,
