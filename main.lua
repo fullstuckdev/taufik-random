@@ -3899,6 +3899,13 @@ return (function(...)
                 task.wait(0.25)
                 local cure = isCureSelected()
                 if settings.CureAutoRevive and cure then
+                    local char = localPlayer.Character
+                    if char then
+                        pcall(function()
+                            char:SetAttribute("corpsecharge", 99)
+                            char:SetAttribute("CorpseChargeHookCount", 99)
+                        end)
+                    end
                     local remote = getCorpseRemote()
                     if remote then
                         pcall(updateSCPCache)
