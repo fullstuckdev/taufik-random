@@ -1462,6 +1462,7 @@ return (function(...)
             LungeSpeedThreshold = 50,
             AutoFleeKiller = false,
             AntiCarry = false,
+            LocalInvisible = false,
             NoSkillChecks = false,
             SpearTrajectoryColor = "Cyan",
             SpearTrajectoryNoclip = false,
@@ -3918,6 +3919,42 @@ return (function(...)
                         end)
                     end
                     held = false
+                end
+            end
+        end)
+        local invisOriginal = {}
+        function applyLocalInvisible(on)
+            local char = localPlayer.Character
+            if not char then
+                return
+            end
+            if on then
+                for a, p in ipairs(char:GetDescendants()) do
+                    if p:IsA("BasePart") or p:IsA("Decal") or p:IsA("Texture") then
+                        if invisOriginal[p] == nil then
+                            invisOriginal[p] = p.Transparency
+                        end
+                        pcall(function()
+                            p.Transparency = 1
+                        end)
+                    end
+                end
+            else
+                for p, orig in pairs(invisOriginal) do
+                    if p and p.Parent then
+                        pcall(function()
+                            p.Transparency = orig
+                        end)
+                    end
+                end
+                table.clear(invisOriginal)
+            end
+        end
+        task.spawn(function()
+            while activeLoop do
+                task.wait(0.3)
+                if settings.LocalInvisible then
+                    pcall(applyLocalInvisible, true)
                 end
             end
         end)
@@ -12689,6 +12726,18 @@ return (function(...)
                     nil
                 )
                 createSection(tabSelf, "Character Perks")
+                controlRegistry.LocalInvisible = createToggle(
+                    tabSelf,
+                    "Invisible (Local - hide own body)",
+                    settings.LocalInvisible,
+                    function(c)
+                        settings.LocalInvisible = c
+                        pcall(saveSettings)
+                        pcall(applyLocalInvisible, c)
+                    end,
+                    UI.AccentCyan,
+                    "LocalInvisible"
+                )
                 controlRegistry.AntiCarry = createToggle(
                     tabSelf,
                     "Anti-Carry (Anchor While Carried)",
