@@ -36,7 +36,6 @@ local IGNORE = {
 }
 local detections = {} -- { {name, full, method, argsText, code} }
 local seen = {}
-local busy = false
 local capturing = true
 local viewMode = "detected" -- "detected" | "excluded"
 local minimized = false
@@ -466,32 +465,42 @@ end)
 -- ---------- the hook ----------
 local old
 old = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-    if capturing and not busy then
+    -- Keep this path as light as possible: capture the essentials, then defer
+    -- ALL heavy work (GetFullName/serialize/UI) off the namecall so the game's
+    -- own remote calls (attacks, etc.) return instantly and stay unaffected.
+    if capturing and typeof(self) == "Instance" then
         local m = getnamecallmethod()
-        if (m == "FireServer" or m == "InvokeServer") and typeof(self) == "Instance" and not IGNORE[self.Name] then
-            busy = true
-            local ok, code, full, joined = pcall(buildCode, self, m, { ... }, select("#", ...))
-            busy = false
-            if ok then
-                local key = m .. "|" .. full .. "|" .. joined
-                if not seen[key] then
-                    seen[key] = true
-                    table.insert(detections, {
-                        name = self.Name,
-                        full = full,
-                        method = m,
-                        argsText = joined,
-                        code = code,
-                    })
-                    if #detections > 200 then
-                        table.remove(detections, 1)
+        if m == "FireServer" or m == "InvokeServer" then
+            local args = { ... }
+            local argc = select("#", ...)
+            task.spawn(function()
+                local okName, nm = pcall(function()
+                    return self.Name
+                end)
+                if okName and not IGNORE[nm] then
+                    local ok, code, full, joined = pcall(buildCode, self, m, args, argc)
+                    if ok then
+                        local key = m .. "|" .. full .. "|" .. joined
+                        if not seen[key] then
+                            seen[key] = true
+                            table.insert(detections, {
+                                name = nm,
+                                full = full,
+                                method = m,
+                                argsText = joined,
+                                code = code,
+                            })
+                            if #detections > 200 then
+                                table.remove(detections, 1)
+                            end
+                            if setclipboard then
+                                pcall(setclipboard, code)
+                            end
+                            dirty = true
+                        end
                     end
-                    if setclipboard then
-                        pcall(setclipboard, code)
-                    end
-                    dirty = true
                 end
-            end
+            end)
         end
     end
     return old(self, ...)
