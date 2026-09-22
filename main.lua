@@ -1461,7 +1461,6 @@ return (function(...)
             HideParryUI = false,
             LungeSpeedThreshold = 50,
             AutoFleeKiller = false,
-            AntiCarry = false,
             LocalInvisible = false,
             NoSkillChecks = false,
             SpearTrajectoryColor = "Cyan",
@@ -3880,48 +3879,6 @@ return (function(...)
             end
             scpCache = c
         end
-        task.spawn(function()
-            local Players = game:GetService("Players")
-            local function isBeingCarried()
-                local me = tostring(localPlayer.UserId)
-                for a, p in ipairs(Players:GetPlayers()) do
-                    if p ~= localPlayer and p.Character then
-                        local id = p.Character:GetAttribute("CarriedSurvivorId")
-                        if id ~= nil and tostring(id) == me then
-                            return true
-                        end
-                    end
-                end
-                local c = localPlayer.Character
-                if c then
-                    if c:GetAttribute("Carried") == true or c:GetAttribute("BeingCarried") == true then
-                        return true
-                    end
-                end
-                return false
-            end
-            local held = false
-            while activeLoop do
-                task.wait(0.05)
-                local char = localPlayer.Character
-                local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                if settings.AntiCarry and hrp and isBeingCarried() then
-                    if not hrp.Anchored then
-                        pcall(function()
-                            hrp.Anchored = true
-                        end)
-                    end
-                    held = true
-                elseif held then
-                    if hrp then
-                        pcall(function()
-                            hrp.Anchored = false
-                        end)
-                    end
-                    held = false
-                end
-            end
-        end)
         local invisOriginal = {}
         function applyLocalInvisible(on)
             local char = localPlayer.Character
@@ -12737,17 +12694,6 @@ return (function(...)
                     end,
                     UI.AccentCyan,
                     "LocalInvisible"
-                )
-                controlRegistry.AntiCarry = createToggle(
-                    tabSelf,
-                    "Anti-Carry (Anchor While Carried)",
-                    settings.AntiCarry,
-                    function(c)
-                        settings.AntiCarry = c
-                        pcall(saveSettings)
-                    end,
-                    UI.AccentGreen,
-                    "AntiCarry"
                 )
                 local function i(c, d, f, g, h)
                     local i = Instance.new("Frame")
