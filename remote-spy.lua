@@ -38,6 +38,8 @@ local detections = {} -- { {name, full, method, argsText, code} }
 local seen = {}
 local busy = false
 local capturing = true
+local viewMode = "detected" -- "detected" | "excluded"
+local minimized = false
 
 -- ---------- helpers ----------
 local function toast(t)
@@ -108,6 +110,7 @@ local ACCENT = Color3.fromRGB(90, 130, 255)
 local RED = Color3.fromRGB(230, 70, 70)
 local GREEN = Color3.fromRGB(60, 200, 120)
 local TXT = Color3.fromRGB(235, 237, 245)
+local GREY = Color3.fromRGB(70, 74, 90)
 
 local main = Instance.new("Frame")
 main.Size = UDim2.new(0, 420, 0, 360)
@@ -145,7 +148,7 @@ bar.Parent = main
 Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 10)
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -180, 1, 0)
+title.Size = UDim2.new(1, -186, 1, 0)
 title.Position = UDim2.new(0, 12, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "VD Remote Spy"
@@ -155,10 +158,12 @@ title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = bar
 
-local pauseBtn = mkBtn(bar, "Pause", ACCENT, 60)
-pauseBtn.Position = UDim2.new(1, -170, 0.5, -13)
-local closeBtn = mkBtn(bar, "Close", RED, 60)
-closeBtn.Position = UDim2.new(1, -68, 0.5, -13)
+local pauseBtn = mkBtn(bar, "Pause", ACCENT, 56)
+pauseBtn.Position = UDim2.new(1, -176, 0.5, -13)
+local minBtn = mkBtn(bar, "Min", GREY, 44)
+minBtn.Position = UDim2.new(1, -114, 0.5, -13)
+local closeBtn = mkBtn(bar, "Close", RED, 56)
+closeBtn.Position = UDim2.new(1, -64, 0.5, -13)
 
 -- action row
 local actions = Instance.new("Frame")
@@ -171,8 +176,9 @@ aLayout.FillDirection = Enum.FillDirection.Horizontal
 aLayout.Padding = UDim.new(0, 6)
 aLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 
-local copyAllBtn = mkBtn(actions, "Copy All", GREEN, 90)
-local clearBtn = mkBtn(actions, "Clear", RED, 70)
+local copyAllBtn = mkBtn(actions, "Copy All", GREEN, 84)
+local clearBtn = mkBtn(actions, "Clear", RED, 60)
+local viewBtn = mkBtn(actions, "Excluded", GREY, 84)
 local countLbl = Instance.new("TextLabel")
 countLbl.Size = UDim2.new(0, 160, 0, 26)
 countLbl.BackgroundTransparency = 1
@@ -259,58 +265,94 @@ local function copyText(txt)
     toast("Copied to clipboard")
 end
 
+local function makeRowFrame(order)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, 0, 0, 30)
+    row.BackgroundColor3 = CARD
+    row.BorderSizePixel = 0
+    row.LayoutOrder = order
+    row.Parent = list
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+    return row
+end
+
+local function makeSideButton(row, text, color)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 44, 0, 22)
+    b.Position = UDim2.new(1, -50, 0.5, -11)
+    b.BackgroundColor3 = color
+    b.Text = text
+    b.TextColor3 = TXT
+    b.Font = Enum.Font.GothamMedium
+    b.TextSize = 11
+    b.BorderSizePixel = 0
+    b.Parent = row
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5)
+    return b
+end
+
 local function refresh()
     for _, ch in ipairs(list:GetChildren()) do
         if ch:IsA("Frame") then
             ch:Destroy()
         end
     end
-    for i, e in ipairs(detections) do
-        local row = Instance.new("Frame")
-        row.Size = UDim2.new(1, 0, 0, 30)
-        row.BackgroundColor3 = CARD
-        row.BorderSizePixel = 0
-        row.LayoutOrder = i
-        row.Parent = list
-        Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
-
-        local nameBtn = Instance.new("TextButton")
-        nameBtn.Size = UDim2.new(1, -60, 1, 0)
-        nameBtn.Position = UDim2.new(0, 8, 0, 0)
-        nameBtn.BackgroundTransparency = 1
-        nameBtn.Text = e.method .. "  " .. e.name
-        nameBtn.TextColor3 = TXT
-        nameBtn.Font = Enum.Font.Gotham
-        nameBtn.TextSize = 12
-        nameBtn.TextXAlignment = Enum.TextXAlignment.Left
-        nameBtn.TextTruncate = Enum.TextTruncate.AtEnd
-        nameBtn.Parent = row
-        nameBtn.Activated:Connect(function()
-            copyText(e.code)
-        end)
-
-        local ex = Instance.new("TextButton")
-        ex.Size = UDim2.new(0, 44, 0, 22)
-        ex.Position = UDim2.new(1, -50, 0.5, -11)
-        ex.BackgroundColor3 = RED
-        ex.Text = "Excl"
-        ex.TextColor3 = TXT
-        ex.Font = Enum.Font.GothamMedium
-        ex.TextSize = 11
-        ex.BorderSizePixel = 0
-        ex.Parent = row
-        Instance.new("UICorner", ex).CornerRadius = UDim.new(0, 5)
-        ex.Activated:Connect(function()
-            IGNORE[e.name] = true
-            for idx = #detections, 1, -1 do
-                if detections[idx].name == e.name then
-                    table.remove(detections, idx)
+    if viewMode == "detected" then
+        for i, e in ipairs(detections) do
+            local row = makeRowFrame(i)
+            local nameBtn = Instance.new("TextButton")
+            nameBtn.Size = UDim2.new(1, -60, 1, 0)
+            nameBtn.Position = UDim2.new(0, 8, 0, 0)
+            nameBtn.BackgroundTransparency = 1
+            nameBtn.Text = e.method .. "  " .. e.name
+            nameBtn.TextColor3 = TXT
+            nameBtn.Font = Enum.Font.Gotham
+            nameBtn.TextSize = 12
+            nameBtn.TextXAlignment = Enum.TextXAlignment.Left
+            nameBtn.TextTruncate = Enum.TextTruncate.AtEnd
+            nameBtn.Parent = row
+            nameBtn.Activated:Connect(function()
+                copyText(e.code)
+            end)
+            local ex = makeSideButton(row, "Excl", RED)
+            ex.Activated:Connect(function()
+                IGNORE[e.name] = true
+                for idx = #detections, 1, -1 do
+                    if detections[idx].name == e.name then
+                        table.remove(detections, idx)
+                    end
                 end
-            end
-            refresh()
-        end)
+                refresh()
+            end)
+        end
+        countLbl.Text = #detections .. " remotes"
+    else
+        local names = {}
+        for name in pairs(IGNORE) do
+            names[#names + 1] = name
+        end
+        table.sort(names)
+        for i, name in ipairs(names) do
+            local row = makeRowFrame(i)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, -60, 1, 0)
+            lbl.Position = UDim2.new(0, 8, 0, 0)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = name
+            lbl.TextColor3 = Color3.fromRGB(180, 185, 200)
+            lbl.Font = Enum.Font.Gotham
+            lbl.TextSize = 12
+            lbl.TextXAlignment = Enum.TextXAlignment.Left
+            lbl.TextTruncate = Enum.TextTruncate.AtEnd
+            lbl.Parent = row
+            local inc = makeSideButton(row, "Incl", GREEN)
+            inc.Activated:Connect(function()
+                IGNORE[name] = nil
+                refresh()
+            end)
+        end
+        countLbl.Text = #names .. " excluded"
     end
-    countLbl.Text = #detections .. " remotes"
 end
 
 copyAllBtn.Activated:Connect(function()
@@ -337,6 +379,75 @@ end)
 closeBtn.Activated:Connect(function()
     gui:Destroy()
 end)
+
+viewBtn.Activated:Connect(function()
+    viewMode = (viewMode == "detected") and "excluded" or "detected"
+    viewBtn.Text = (viewMode == "detected") and "Excluded" or "Detected"
+    refresh()
+end)
+
+-- minimize -> draggable floating icon (tap to reopen)
+local floatIcon = Instance.new("TextButton")
+floatIcon.Name = "VD_SpyFloat"
+floatIcon.Size = UDim2.new(0, 46, 0, 46)
+floatIcon.Position = UDim2.new(0, 20, 0.4, 0)
+floatIcon.BackgroundColor3 = ACCENT
+floatIcon.Text = "SPY"
+floatIcon.TextColor3 = TXT
+floatIcon.Font = Enum.Font.GothamBold
+floatIcon.TextSize = 13
+floatIcon.Visible = false
+floatIcon.ZIndex = 10
+floatIcon.Active = true
+floatIcon.Parent = gui
+Instance.new("UICorner", floatIcon).CornerRadius = UDim.new(0.5, 0)
+do
+    local st = Instance.new("UIStroke", floatIcon)
+    st.Color = Color3.fromRGB(150, 175, 255)
+    st.Thickness = 1.4
+end
+
+minBtn.Activated:Connect(function()
+    main.Visible = false
+    floatIcon.Visible = true
+    minimized = true
+end)
+
+do
+    local fDrag, fStart, fPos, moved
+    floatIcon.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            fDrag = true
+            moved = false
+            fStart = input.Position
+            fPos = floatIcon.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    fDrag = false
+                    if not moved then
+                        main.Visible = true
+                        floatIcon.Visible = false
+                        minimized = false
+                    end
+                end
+            end)
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if fDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - fStart
+            if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then
+                moved = true
+            end
+            floatIcon.Position = UDim2.new(
+                fPos.X.Scale,
+                fPos.X.Offset + delta.X,
+                fPos.Y.Scale,
+                fPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
 
 -- ---------- the hook ----------
 local old
