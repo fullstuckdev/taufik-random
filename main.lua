@@ -1499,6 +1499,7 @@ return (function(...)
             FakeLag = false,
             FakeLagMs = 200,
             Desync = false,
+            RemoteDetector = false,
             FullBright = false,
             NoFlashlightBlind = false,
             RevolverAutofarm = false,
@@ -16460,8 +16461,156 @@ return (function(...)
                     UI.AccentCyan
                 )
                 createSection(tabVisuals, "Network Manipulation", UI.Accent)
+                controlRegistry.RemoteDetector = createToggle(
+                    tabVisuals,
+                    "Remote Detector (Log to Clipboard)",
+                    settings.RemoteDetector,
+                    function(c)
+                        settings.RemoteDetector = c
+                        pcall(saveSettings)
+                        if c then
+                            showNotification(
+                                "Remote Detector ON",
+                                "Trigger a skill/action. Detected remotes are copied to clipboard.",
+                                "success"
+                            )
+                        end
+                    end,
+                    UI.Accent,
+                    "RemoteDetector"
+                )
+                do
+                    local spy = createCollapsibleGroup(tabVisuals, "Detected Remotes (Spy)", UI.Accent)
+                    local preview = Instance.new("TextBox")
+                    preview.Size = UDim2.new(1, 0, 0, 78)
+                    preview.BackgroundColor3 = UI.Card
+                    preview.BackgroundTransparency = 0.3
+                    preview.BorderSizePixel = 0
+                    preview.TextColor3 = UI.Text
+                    preview.Font = Enum.Font.Code
+                    preview.TextSize = 11
+                    preview.TextXAlignment = Enum.TextXAlignment.Left
+                    preview.TextYAlignment = Enum.TextYAlignment.Top
+                    preview.TextWrapped = true
+                    preview.ClearTextOnFocus = false
+                    preview.MultiLine = true
+                    preview.Text = "-- Tap a remote below to view/copy its code"
+                    preview.Parent = spy.content;
+                    (Instance.new("UICorner", preview)).CornerRadius = UDim.new(0, UI.CardRadius)
+                    local rows = Instance.new("Frame")
+                    rows.Size = UDim2.new(1, 0, 0, 0)
+                    rows.AutomaticSize = Enum.AutomaticSize.Y
+                    rows.BackgroundTransparency = 1
+                    rows.BorderSizePixel = 0
+                    local rowLayout = Instance.new("UIListLayout", rows)
+                    rowLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                    rowLayout.Padding = UDim.new(0, 4)
+                    local makeRow, refresh
+                    local function selectEntry(entry)
+                        preview.Text = entry.code
+                        if setclipboard then
+                            pcall(setclipboard, entry.code)
+                        end
+                        pcall(showNotification, "Copied", entry.name, "success")
+                    end
+                    makeRow = function(entry)
+                        local row = Instance.new("Frame")
+                        row.Size = UDim2.new(1, 0, 0, 30)
+                        row.BackgroundColor3 = UI.Card
+                        row.BackgroundTransparency = 0.4
+                        row.BorderSizePixel = 0
+                        row.Parent = rows;
+                        (Instance.new("UICorner", row)).CornerRadius = UDim.new(0, UI.CardRadius)
+                        local nameBtn = Instance.new("TextButton")
+                        nameBtn.Size = UDim2.new(1, -116, 1, 0)
+                        nameBtn.Position = UDim2.new(0, 8, 0, 0)
+                        nameBtn.BackgroundTransparency = 1
+                        nameBtn.Text = entry.name
+                        nameBtn.TextColor3 = UI.Text
+                        nameBtn.Font = Enum.Font.Ubuntu
+                        nameBtn.TextSize = 12
+                        nameBtn.TextXAlignment = Enum.TextXAlignment.Left
+                        nameBtn.TextTruncate = Enum.TextTruncate.AtEnd
+                        nameBtn.Parent = row
+                        nameBtn.MouseButton1Click:Connect(function()
+                            selectEntry(entry)
+                        end)
+                        local copyBtn = Instance.new("TextButton")
+                        copyBtn.Size = UDim2.new(0, 52, 0, 22)
+                        copyBtn.Position = UDim2.new(1, -110, 0.5, -11)
+                        copyBtn.BackgroundColor3 = UI.Accent
+                        copyBtn.Text = "Copy"
+                        copyBtn.TextColor3 = UI.Text
+                        copyBtn.Font = Enum.Font.Ubuntu
+                        copyBtn.TextSize = 11
+                        copyBtn.BorderSizePixel = 0
+                        copyBtn.Parent = row;
+                        (Instance.new("UICorner", copyBtn)).CornerRadius = UDim.new(0, 5)
+                        copyBtn.MouseButton1Click:Connect(function()
+                            selectEntry(entry)
+                        end)
+                        local exBtn = Instance.new("TextButton")
+                        exBtn.Size = UDim2.new(0, 50, 0, 22)
+                        exBtn.Position = UDim2.new(1, -54, 0.5, -11)
+                        exBtn.BackgroundColor3 = UI.AccentRed
+                        exBtn.Text = "Excl"
+                        exBtn.TextColor3 = UI.Text
+                        exBtn.Font = Enum.Font.Ubuntu
+                        exBtn.TextSize = 11
+                        exBtn.BorderSizePixel = 0
+                        exBtn.Parent = row;
+                        (Instance.new("UICorner", exBtn)).CornerRadius = UDim.new(0, 5)
+                        exBtn.MouseButton1Click:Connect(function()
+                            _G.VD_DetectorIgnore[entry.name] = true
+                            for idx = #_G.VD_DetectedRemotes, 1, -1 do
+                                if _G.VD_DetectedRemotes[idx].name == entry.name then
+                                    table.remove(_G.VD_DetectedRemotes, idx)
+                                end
+                            end
+                            refresh()
+                        end)
+                    end
+                    refresh = function()
+                        for a, ch in ipairs(rows:GetChildren()) do
+                            if ch:IsA("Frame") then
+                                ch:Destroy()
+                            end
+                        end
+                        for a, e in ipairs(_G.VD_DetectedRemotes) do
+                            makeRow(e)
+                        end
+                    end
+                    createButton(spy.content, "Refresh Detected List", "Refresh", refresh, UI.AccentCyan, "SpyRefresh")
+                    createButton(spy.content, "Copy All Remotes", "Copy All", function()
+                        local all = {}
+                        for a, e in ipairs(_G.VD_DetectedRemotes) do
+                            all[a] = e.code
+                        end
+                        local text = table.concat(all, "\n\n")
+                        if text == "" then
+                            text = "-- (no remotes detected yet)"
+                        end
+                        if setclipboard then
+                            pcall(setclipboard, text)
+                        end
+                        preview.Text = text
+                        pcall(showNotification, "Copied All", #_G.VD_DetectedRemotes .. " remotes", "success")
+                    end, UI.AccentGreen, "SpyCopyAll")
+                    createButton(spy.content, "Clear Detections", "Clear", function()
+                        table.clear(_G.VD_DetectedRemotes)
+                        refresh()
+                    end, UI.AccentRed, "SpyClear")
+                    rows.Parent = spy.content
+                    refresh()
+                end
                 local s = createCollapsibleToggle(tabVisuals, "Fake Lag", settings.FakeLag, function(c)
                     settings.FakeLag = c
+                    if c and settings.Desync then
+                        settings.Desync = false
+                        if controlRegistry.Desync and controlRegistry.Desync.setValue then
+                            pcall(controlRegistry.Desync.setValue, false)
+                        end
+                    end
                     pcall(saveSettings)
                 end, UI.Accent, "FakeLag")
                 controlRegistry.FakeLag = { setValue = s.setValue }
@@ -16495,6 +16644,12 @@ return (function(...)
                 end, nil, "FakeLagGhost")
                 local u = createCollapsibleToggle(tabVisuals, "Network Desync", settings.Desync, function(c)
                     settings.Desync = c
+                    if c and settings.FakeLag then
+                        settings.FakeLag = false
+                        if controlRegistry.FakeLag and controlRegistry.FakeLag.setValue then
+                            pcall(controlRegistry.FakeLag.setValue, false)
+                        end
+                    end
                     pcall(saveSettings)
                 end, UI.Accent, "Desync")
                 controlRegistry.Desync = { setValue = u.setValue }
@@ -30692,6 +30847,47 @@ return (function(...)
             local f = false
             local g = tick()
             local h = nil
+            _G.VD_DetectorIgnore = _G.VD_DetectorIgnore
+                or {
+                    UpdateCharacterLook = true,
+                    ReplicateMovement = true,
+                    UpdatePosition = true,
+                    Heartbeat = true,
+                    Ping = true,
+                }
+            _G.VD_DetectedRemotes = _G.VD_DetectedRemotes or {}
+            local detectorSeen = {}
+            logDetectedRemote = function(remote, method, args)
+                if _G.VD_DetectorIgnore[remote.Name] then
+                    return
+                end
+                local full = remote.Name
+                pcall(function()
+                    full = remote:GetFullName()
+                end)
+                local parts = {}
+                for idx = 1, #args do
+                    parts[idx] = tostring(args[idx])
+                end
+                local joined = table.concat(parts, ", ")
+                local key = method .. "|" .. full .. "|" .. joined
+                if detectorSeen[key] then
+                    return
+                end
+                detectorSeen[key] = true
+                local code = "-- " .. method .. "\nlocal remote = game." .. full .. "\nremote:" .. method .. "(" .. joined .. ")"
+                table.insert(_G.VD_DetectedRemotes, {
+                    name = remote.Name,
+                    full = full,
+                    method = method,
+                    args = joined,
+                    code = code,
+                })
+                if setclipboard then
+                    pcall(setclipboard, code)
+                end
+                pcall(showNotification, "Remote Detected", remote.Name, "success")
+            end
             destroyDesyncGhost = function()
                 if h then
                     pcall(function()
@@ -30965,6 +31161,13 @@ return (function(...)
                             return g(i, ...)
                         end
                         local k = { ... }
+                        if
+                            settings.RemoteDetector
+                            and (j == "FireServer" or j == "fireServer" or j == "InvokeServer")
+                            and typeof(i) == "Instance"
+                        then
+                            pcall(logDetectedRemote, i, j, k)
+                        end
                         local l = false
                         local m = nil
                         local n, o = pcall(function()
@@ -31084,6 +31287,27 @@ return (function(...)
                         return g(i, ...)
                     end)
                 )
+                task.spawn(function()
+                    local rs = game:GetService("RunService")
+                    while activeLoop do
+                        rs.Heartbeat:Wait()
+                        local now = tick()
+                        local idx = 1
+                        while idx <= #d do
+                            local e = d[idx]
+                            if not e then
+                                table.remove(d, idx)
+                            elseif now >= e.sendTime then
+                                pcall(function()
+                                    e.func(e.self, unpack(e.args))
+                                end)
+                                table.remove(d, idx)
+                            else
+                                idx = idx + 1
+                            end
+                        end
+                    end
+                end)
             end)
         end)();
         (function()
