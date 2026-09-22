@@ -40,6 +40,7 @@ local busy = false
 local capturing = true
 local viewMode = "detected" -- "detected" | "excluded"
 local minimized = false
+local dirty = false
 
 -- ---------- helpers ----------
 local function toast(t)
@@ -377,6 +378,7 @@ pauseBtn.Activated:Connect(function()
 end)
 
 closeBtn.Activated:Connect(function()
+    capturing = false
     gui:Destroy()
 end)
 
@@ -449,6 +451,18 @@ do
     end)
 end
 
+-- throttled UI refresh (decoupled from the hook so the game thread never
+-- blocks on UI rebuilds, and a UI error can't corrupt the __namecall hook)
+task.spawn(function()
+    while gui.Parent do
+        task.wait(0.35)
+        if dirty then
+            dirty = false
+            pcall(refresh)
+        end
+    end
+end)
+
 -- ---------- the hook ----------
 local old
 old = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
@@ -469,10 +483,13 @@ old = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
                         argsText = joined,
                         code = code,
                     })
+                    if #detections > 200 then
+                        table.remove(detections, 1)
+                    end
                     if setclipboard then
                         pcall(setclipboard, code)
                     end
-                    refresh()
+                    dirty = true
                 end
             end
         end
