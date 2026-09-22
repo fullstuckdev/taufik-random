@@ -16480,6 +16480,15 @@ return (function(...)
                     "RemoteDetector"
                 )
                 do
+                    _G.VD_DetectedRemotes = _G.VD_DetectedRemotes or {}
+                    _G.VD_DetectorIgnore = _G.VD_DetectorIgnore
+                        or {
+                            UpdateCharacterLook = true,
+                            ReplicateMovement = true,
+                            UpdatePosition = true,
+                            Heartbeat = true,
+                            Ping = true,
+                        }
                     local spy = createCollapsibleGroup(tabVisuals, "Detected Remotes (Spy)", UI.Accent)
                     local preview = Instance.new("TextBox")
                     preview.Size = UDim2.new(1, 0, 0, 78)
