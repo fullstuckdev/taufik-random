@@ -1473,7 +1473,6 @@ return (function(...)
             InstantHeal = false,
             BlockVaultPalletInteraction = false,
             AutoFarmKiller = false,
-            CureAutoRevive = false,
             RemoteDropPallet = false,
             RemoteDropPalletKey = "None",
             AutoSelfUnhook = false,
@@ -3879,47 +3878,6 @@ return (function(...)
             end
             scpCache = c
         end
-        task.spawn(function()
-            local RS = game:GetService("ReplicatedStorage")
-            local function getCorpseRemote()
-                local r = RS:FindFirstChild("Remotes")
-                r = r and r:FindFirstChild("Killers")
-                r = r and r:FindFirstChild("Cure")
-                r = r and r:FindFirstChild("corpse")
-                return r
-            end
-            local function isCureSelected()
-                local k = ""
-                pcall(function()
-                    k = tostring(getSelectedKiller(localPlayer))
-                end)
-                return (k:lower()):find("cure") ~= nil
-            end
-            while activeLoop do
-                task.wait(0.25)
-                local cure = isCureSelected()
-                if settings.CureAutoRevive and cure then
-                    local char = localPlayer.Character
-                    if char then
-                        pcall(function()
-                            char:SetAttribute("corpsecharge", 99)
-                            char:SetAttribute("CorpseChargeHookCount", 99)
-                        end)
-                    end
-                    local remote = getCorpseRemote()
-                    if remote then
-                        pcall(updateSCPCache)
-                        for a, corpse in ipairs(scpCache) do
-                            if corpse and corpse.Parent then
-                                pcall(function()
-                                    remote:FireServer(corpse)
-                                end)
-                            end
-                        end
-                    end
-                end
-            end
-        end)
         local lastMapModel = nil
         local currentMapName = "Unknown Map"
         function getMapName()
@@ -15425,80 +15383,6 @@ return (function(...)
                             u = false
                         end)
                     end, UI.AccentCyan, f.bind)
-                end
-                local cureGroup = createCollapsibleGroup(tabCombat, "CURE", UI.Accent)
-                controlRegistry.CureAutoRevive = createToggle(
-                    cureGroup.content,
-                    "Auto Revive Corpses (No Cooldown / No Hook)",
-                    settings.CureAutoRevive,
-                    function(c)
-                        settings.CureAutoRevive = c
-                        pcall(saveSettings)
-                        if c then
-                            showNotification(
-                                "Cure Auto Revive",
-                                "Firing revive on all map corpses. Play as Cure; if the server ignores it, it means it's server-gated.",
-                                "info"
-                            )
-                        end
-                    end,
-                    nil,
-                    "CureAutoRevive"
-                )
-                do
-                    local flaskRow = Instance.new("Frame")
-                    flaskRow.Size = UDim2.new(1, 0, 0, 32)
-                    flaskRow.BackgroundColor3 = UI.Card
-                    flaskRow.BackgroundTransparency = 0.5
-                    flaskRow.BorderSizePixel = 0
-                    flaskRow.Parent = cureGroup.content;
-                    (Instance.new("UICorner", flaskRow)).CornerRadius = UDim.new(0, UI.CardRadius)
-                    local flaskLbl = Instance.new("TextLabel")
-                    flaskLbl.Size = UDim2.new(1, -64, 1, 0)
-                    flaskLbl.Position = UDim2.new(0, 10, 0, 0)
-                    flaskLbl.BackgroundTransparency = 1
-                    flaskLbl.Text = "Throw Poison (No CD) - aim w/ camera"
-                    flaskLbl.TextColor3 = UI.Text
-                    flaskLbl.Font = Enum.Font.Ubuntu
-                    flaskLbl.TextSize = 12
-                    flaskLbl.TextXAlignment = Enum.TextXAlignment.Left
-                    flaskLbl.Parent = flaskRow
-                    local flaskKb = createKeybindButton(flaskRow, "CureThrowPoison", function()
-                        task.spawn(function()
-                            local k = ""
-                            pcall(function()
-                                k = tostring(getSelectedKiller(localPlayer))
-                            end)
-                            if not (k:lower()):find("cure") then
-                                return
-                            end
-                            local base = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
-                            base = base and base:FindFirstChild("Killers")
-                            base = base and base:FindFirstChild("Cure")
-                            if not base then
-                                return
-                            end
-                            local char = localPlayer.Character
-                            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                            local cam = workspace.CurrentCamera
-                            if not hrp or not cam then
-                                return
-                            end
-                            local prep = base:FindFirstChild("PrepareFlask")
-                            local throw = base:FindFirstChild("ThrowFlask")
-                            if prep then
-                                pcall(function()
-                                    prep:FireServer()
-                                end)
-                            end
-                            if throw then
-                                pcall(function()
-                                    throw:FireServer(cam.CFrame.LookVector, hrp.Position)
-                                end)
-                            end
-                        end)
-                    end)
-                    flaskKb.Position = UDim2.new(1, -10, 0.5, 0)
                 end
                 local w = createCollapsibleGroup(tabCombat, "STALKER", UI.Accent)
                 controlRegistry["Stalker.NoCooldown"] = createToggle(
