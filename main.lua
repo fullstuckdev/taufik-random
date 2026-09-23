@@ -1467,6 +1467,7 @@ return (function(...)
             StickTarget = "Killer",
             StickPosition = "Back",
             StickPrediction = 5,
+            StickMethod = "Teleport",
             NoSkillChecks = false,
             SpearTrajectoryColor = "Cyan",
             SpearTrajectoryNoclip = false,
@@ -3948,11 +3949,29 @@ return (function(...)
                 end
                 return nil
             end
+            local function clearWeld()
+                local char = localPlayer.Character
+                if not char then
+                    return
+                end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local w = hrp:FindFirstChild("VD_StickWeld")
+                    if w then
+                        w:Destroy()
+                    end
+                end
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum and hum.PlatformStand then
+                    hum.PlatformStand = false
+                end
+            end
             while activeLoop do
                 RunService.RenderStepped:Wait()
                 if settings.StickToKiller then
                     local char = localPlayer.Character
                     local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+                    local hum = char and char:FindFirstChildOfClass("Humanoid")
                     local targetHrp = nil
                     if settings.StickTarget == "Selected" then
                         local tp = _G.VD_CurrentSelectedPlayer
@@ -3964,9 +3983,29 @@ return (function(...)
                     else
                         targetHrp = getKillerHRP()
                     end
-                    if myHrp and targetHrp then
+                    local dist = settings.StickToKillerDist or 2
+                    if myHrp and targetHrp and settings.StickMethod == "Weld" then
                         pcall(function()
-                            local dist = settings.StickToKillerDist or 2
+                            local weld = myHrp:FindFirstChild("VD_StickWeld")
+                            if not weld then
+                                weld = Instance.new("Weld")
+                                weld.Name = "VD_StickWeld"
+                                weld.Part1 = myHrp
+                                weld.Parent = myHrp
+                            end
+                            weld.Part0 = targetHrp
+                            if settings.StickPosition == "Above" then
+                                weld.C0 = CFrame.new(0, dist + 3, 0)
+                            else
+                                weld.C0 = CFrame.new(0, 0, dist)
+                            end
+                            if hum then
+                                hum.PlatformStand = true
+                            end
+                        end)
+                    elseif myHrp and targetHrp then
+                        clearWeld()
+                        pcall(function()
                             local vel = targetHrp.AssemblyLinearVelocity
                             local lead = (typeof(vel) == "Vector3")
                                     and (vel * ((settings.StickPrediction or 5) / 100))
@@ -3978,7 +4017,11 @@ return (function(...)
                             end
                             myHrp.AssemblyLinearVelocity = vel
                         end)
+                    else
+                        clearWeld()
                     end
+                else
+                    clearWeld()
                 end
             end
         end)
@@ -12792,6 +12835,17 @@ return (function(...)
                     settings.StickPosition or "Back",
                     function(c)
                         settings.StickPosition = c
+                        pcall(saveSettings)
+                    end
+                )
+                controlRegistry.StickMethod = createSelector(
+                    tabSelf,
+                    "Stick Method",
+                    { "Teleport (smooth)", "Weld (attach)" },
+                    { "Teleport", "Weld" },
+                    settings.StickMethod or "Teleport",
+                    function(c)
+                        settings.StickMethod = c
                         pcall(saveSettings)
                     end
                 )
