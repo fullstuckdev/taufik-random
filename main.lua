@@ -1465,6 +1465,7 @@ return (function(...)
             StickToKiller = false,
             StickToKillerDist = 2,
             StickTarget = "Killer",
+            StickPosition = "Back",
             NoSkillChecks = false,
             SpearTrajectoryColor = "Cyan",
             SpearTrajectoryNoclip = false,
@@ -3963,7 +3964,12 @@ return (function(...)
                     end
                     if myHrp and targetHrp then
                         pcall(function()
-                            myHrp.CFrame = targetHrp.CFrame * CFrame.new(0, 0, settings.StickToKillerDist or 2)
+                            local dist = settings.StickToKillerDist or 2
+                            if settings.StickPosition == "Above" then
+                                myHrp.CFrame = CFrame.new(targetHrp.Position + Vector3.new(0, dist + 3, 0))
+                            else
+                                myHrp.CFrame = targetHrp.CFrame * CFrame.new(0, 0, dist)
+                            end
                             myHrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                         end)
                     end
@@ -12769,6 +12775,17 @@ return (function(...)
                     settings.StickTarget or "Killer",
                     function(c)
                         settings.StickTarget = c
+                        pcall(saveSettings)
+                    end
+                )
+                controlRegistry.StickPosition = createSelector(
+                    tabSelf,
+                    "Stick Position",
+                    { "Behind (Back)", "Above Head" },
+                    { "Back", "Above" },
+                    settings.StickPosition or "Back",
+                    function(c)
+                        settings.StickPosition = c
                         pcall(saveSettings)
                     end
                 )
