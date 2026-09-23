@@ -3921,6 +3921,7 @@ return (function(...)
         end)
         task.spawn(function()
             local Players = game:GetService("Players")
+            local RunService = game:GetService("RunService")
             local function getKillerHRP()
                 for a, p in ipairs(Players:GetPlayers()) do
                     if p ~= localPlayer and p.Character then
@@ -3947,7 +3948,7 @@ return (function(...)
                 return nil
             end
             while activeLoop do
-                task.wait()
+                RunService.RenderStepped:Wait()
                 if settings.StickToKiller then
                     local char = localPlayer.Character
                     local myHrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -3965,12 +3966,14 @@ return (function(...)
                     if myHrp and targetHrp then
                         pcall(function()
                             local dist = settings.StickToKillerDist or 2
+                            local vel = targetHrp.AssemblyLinearVelocity
+                            local lead = (typeof(vel) == "Vector3") and (vel * 0.05) or Vector3.new()
                             if settings.StickPosition == "Above" then
-                                myHrp.CFrame = CFrame.new(targetHrp.Position + Vector3.new(0, dist + 3, 0))
+                                myHrp.CFrame = CFrame.new(targetHrp.Position + lead + Vector3.new(0, dist + 3, 0))
                             else
-                                myHrp.CFrame = targetHrp.CFrame * CFrame.new(0, 0, dist)
+                                myHrp.CFrame = (targetHrp.CFrame + lead) * CFrame.new(0, 0, dist)
                             end
-                            myHrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            myHrp.AssemblyLinearVelocity = vel
                         end)
                     end
                 end
