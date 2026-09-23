@@ -1466,6 +1466,7 @@ return (function(...)
             StickToKillerDist = 2,
             StickTarget = "Killer",
             StickPosition = "Back",
+            StickPrediction = 5,
             NoSkillChecks = false,
             SpearTrajectoryColor = "Cyan",
             SpearTrajectoryNoclip = false,
@@ -3967,7 +3968,9 @@ return (function(...)
                         pcall(function()
                             local dist = settings.StickToKillerDist or 2
                             local vel = targetHrp.AssemblyLinearVelocity
-                            local lead = (typeof(vel) == "Vector3") and (vel * 0.05) or Vector3.new()
+                            local lead = (typeof(vel) == "Vector3")
+                                    and (vel * ((settings.StickPrediction or 5) / 100))
+                                or Vector3.new()
                             if settings.StickPosition == "Above" then
                                 myHrp.CFrame = CFrame.new(targetHrp.Position + lead + Vector3.new(0, dist + 3, 0))
                             else
@@ -12800,6 +12803,18 @@ return (function(...)
                     settings.StickToKillerDist or 2,
                     function(c)
                         settings.StickToKillerDist = c
+                        pcall(saveSettings)
+                    end,
+                    UI.AccentRed
+                )
+                controlRegistry.StickPrediction = createSlider(
+                    tabSelf,
+                    "Stick Prediction (lag comp)",
+                    0,
+                    30,
+                    settings.StickPrediction or 5,
+                    function(c)
+                        settings.StickPrediction = c
                         pcall(saveSettings)
                     end,
                     UI.AccentRed
