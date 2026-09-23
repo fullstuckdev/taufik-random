@@ -1462,6 +1462,8 @@ return (function(...)
             LungeSpeedThreshold = 50,
             AutoFleeKiller = false,
             LocalInvisible = false,
+            StickToKiller = false,
+            StickToKillerDist = 2,
             NoSkillChecks = false,
             SpearTrajectoryColor = "Cyan",
             SpearTrajectoryNoclip = false,
@@ -3912,6 +3914,48 @@ return (function(...)
                 task.wait(0.3)
                 if settings.LocalInvisible then
                     pcall(applyLocalInvisible, true)
+                end
+            end
+        end)
+        task.spawn(function()
+            local Players = game:GetService("Players")
+            local function getKillerHRP()
+                for a, p in ipairs(Players:GetPlayers()) do
+                    if p ~= localPlayer and p.Character then
+                        local isKiller = p:GetAttribute("Role") == "Killer"
+                            or p:GetAttribute("IsKiller") == true
+                            or p.Character:GetAttribute("Role") == "Killer"
+                            or p.Character:GetAttribute("IsKiller") == true
+                        if not isKiller and p.Team then
+                            local tn = (p.Team.Name):lower()
+                            if tn:find("killer") or tn:find("slasher") or tn:find("monster") then
+                                isKiller = true
+                            end
+                        end
+                        if isKiller then
+                            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                                or p.Character:FindFirstChild("UpperTorso")
+                                or p.Character:FindFirstChild("Torso")
+                            if hrp then
+                                return hrp
+                            end
+                        end
+                    end
+                end
+                return nil
+            end
+            while activeLoop do
+                task.wait()
+                if settings.StickToKiller then
+                    local char = localPlayer.Character
+                    local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+                    local killerHrp = getKillerHRP()
+                    if myHrp and killerHrp then
+                        pcall(function()
+                            myHrp.CFrame = killerHrp.CFrame * CFrame.new(0, 0, settings.StickToKillerDist or 2)
+                            myHrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                        end)
+                    end
                 end
             end
         end)
@@ -12694,6 +12738,29 @@ return (function(...)
                     end,
                     UI.AccentCyan,
                     "LocalInvisible"
+                )
+                controlRegistry.StickToKiller = createToggle(
+                    tabSelf,
+                    "Stick To Killer's Back",
+                    settings.StickToKiller,
+                    function(c)
+                        settings.StickToKiller = c
+                        pcall(saveSettings)
+                    end,
+                    UI.AccentRed,
+                    "StickToKiller"
+                )
+                controlRegistry.StickToKillerDist = createSlider(
+                    tabSelf,
+                    "Stick Distance (studs behind)",
+                    0,
+                    8,
+                    settings.StickToKillerDist or 2,
+                    function(c)
+                        settings.StickToKillerDist = c
+                        pcall(saveSettings)
+                    end,
+                    UI.AccentRed
                 )
                 local function i(c, d, f, g, h)
                     local i = Instance.new("Frame")
