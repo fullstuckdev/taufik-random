@@ -1466,7 +1466,6 @@ return (function(...)
             StickToKillerDist = 2,
             StickTarget = "Killer",
             StickPosition = "Back",
-            StickPrediction = 5,
             StickMethod = "Teleport",
             NoSkillChecks = false,
             SpearTrajectoryColor = "Cyan",
@@ -4006,16 +4005,12 @@ return (function(...)
                     elseif myHrp and targetHrp then
                         clearWeld()
                         pcall(function()
-                            local vel = targetHrp.AssemblyLinearVelocity
-                            local lead = (typeof(vel) == "Vector3")
-                                    and (vel * ((settings.StickPrediction or 5) / 100))
-                                or Vector3.new()
                             if settings.StickPosition == "Above" then
-                                myHrp.CFrame = CFrame.new(targetHrp.Position + lead + Vector3.new(0, dist + 3, 0))
+                                myHrp.CFrame = CFrame.new(targetHrp.Position + Vector3.new(0, dist + 3, 0))
                             else
-                                myHrp.CFrame = (targetHrp.CFrame + lead) * CFrame.new(0, 0, dist)
+                                myHrp.CFrame = targetHrp.CFrame * CFrame.new(0, 0, dist)
                             end
-                            myHrp.AssemblyLinearVelocity = vel
+                            myHrp.AssemblyLinearVelocity = targetHrp.AssemblyLinearVelocity
                         end)
                     else
                         clearWeld()
@@ -12857,18 +12852,6 @@ return (function(...)
                     settings.StickToKillerDist or 2,
                     function(c)
                         settings.StickToKillerDist = c
-                        pcall(saveSettings)
-                    end,
-                    UI.AccentRed
-                )
-                controlRegistry.StickPrediction = createSlider(
-                    tabSelf,
-                    "Stick Prediction (lag comp)",
-                    0,
-                    30,
-                    settings.StickPrediction or 5,
-                    function(c)
-                        settings.StickPrediction = c
                         pcall(saveSettings)
                     end,
                     UI.AccentRed
