@@ -1464,6 +1464,7 @@ return (function(...)
             LocalInvisible = false,
             StickToKiller = false,
             StickToKillerDist = 2,
+            StickTarget = "Killer",
             NoSkillChecks = false,
             SpearTrajectoryColor = "Cyan",
             SpearTrajectoryNoclip = false,
@@ -3949,10 +3950,20 @@ return (function(...)
                 if settings.StickToKiller then
                     local char = localPlayer.Character
                     local myHrp = char and char:FindFirstChild("HumanoidRootPart")
-                    local killerHrp = getKillerHRP()
-                    if myHrp and killerHrp then
+                    local targetHrp = nil
+                    if settings.StickTarget == "Selected" then
+                        local tp = _G.VD_CurrentSelectedPlayer
+                        if tp and tp ~= localPlayer and tp.Character then
+                            targetHrp = tp.Character:FindFirstChild("HumanoidRootPart")
+                                or tp.Character:FindFirstChild("UpperTorso")
+                                or tp.Character:FindFirstChild("Torso")
+                        end
+                    else
+                        targetHrp = getKillerHRP()
+                    end
+                    if myHrp and targetHrp then
                         pcall(function()
-                            myHrp.CFrame = killerHrp.CFrame * CFrame.new(0, 0, settings.StickToKillerDist or 2)
+                            myHrp.CFrame = targetHrp.CFrame * CFrame.new(0, 0, settings.StickToKillerDist or 2)
                             myHrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                         end)
                     end
@@ -12741,7 +12752,7 @@ return (function(...)
                 )
                 controlRegistry.StickToKiller = createToggle(
                     tabSelf,
-                    "Stick To Killer's Back",
+                    "Stick To Target's Back",
                     settings.StickToKiller,
                     function(c)
                         settings.StickToKiller = c
@@ -12749,6 +12760,17 @@ return (function(...)
                     end,
                     UI.AccentRed,
                     "StickToKiller"
+                )
+                controlRegistry.StickTarget = createSelector(
+                    tabSelf,
+                    "Stick Target",
+                    { "Nearest Killer", "Selected Player (Home tab)" },
+                    { "Killer", "Selected" },
+                    settings.StickTarget or "Killer",
+                    function(c)
+                        settings.StickTarget = c
+                        pcall(saveSettings)
+                    end
                 )
                 controlRegistry.StickToKillerDist = createSlider(
                     tabSelf,
